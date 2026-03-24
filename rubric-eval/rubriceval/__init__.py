@@ -51,6 +51,14 @@ from rubriceval.metrics.agent import (
     CostMetric,
 )
 
+# Metrics — advanced agent evaluation
+from rubriceval.metrics.advanced_agent import (
+    ToolCallEfficiency,
+    SafetyCompliance,
+    ReasoningQuality,
+    ContextUtilization,
+)
+
 # Base for custom metrics
 from rubriceval.metrics.base import BaseMetric
 
@@ -81,6 +89,11 @@ __all__ = [
     "TaskCompletion",
     "LatencyMetric",
     "CostMetric",
+    # Advanced agent metrics
+    "ToolCallEfficiency",
+    "SafetyCompliance",
+    "ReasoningQuality",
+    "ContextUtilization",
     # Base
     "BaseMetric",
 ]

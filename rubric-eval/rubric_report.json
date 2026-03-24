@@ -23,8 +23,8 @@
       "total": 5
     }
   },
-  "started_at": "2026-03-24T21:50:08.074352",
-  "finished_at": "2026-03-24T21:50:08.074447",
+  "started_at": "2026-03-24T23:42:22.922063",
+  "finished_at": "2026-03-24T23:42:22.922195",
   "results": [
     {
       "name": "Capital of France",
@@ -34,7 +34,7 @@
       "passed": true,
       "overall_score": 1.0,
       "error": null,
-      "evaluated_at": "2026-03-24T21:50:08.074364",
+      "evaluated_at": "2026-03-24T23:42:22.922094",
       "metrics": [
         {
           "name": "exact_match",
@@ -64,7 +64,7 @@
       "passed": false,
       "overall_score": 0.3333,
       "error": null,
-      "evaluated_at": "2026-03-24T21:50:08.074422",
+      "evaluated_at": "2026-03-24T23:42:22.922123",
       "metrics": [
         {
           "name": "exact_match",
@@ -94,7 +94,7 @@
       "passed": false,
       "overall_score": 0.3333,
       "error": null,
-      "evaluated_at": "2026-03-24T21:50:08.074431",
+      "evaluated_at": "2026-03-24T23:42:22.922142",
       "metrics": [
         {
           "name": "exact_match",
@@ -124,7 +124,7 @@
       "passed": false,
       "overall_score": 0.3333,
       "error": null,
-      "evaluated_at": "2026-03-24T21:50:08.074438",
+      "evaluated_at": "2026-03-24T23:42:22.922154",
       "metrics": [
         {
           "name": "exact_match",
@@ -154,7 +154,7 @@
       "passed": false,
       "overall_score": 0.3333,
       "error": null,
-      "evaluated_at": "2026-03-24T21:50:08.074444",
+      "evaluated_at": "2026-03-24T23:42:22.922165",
       "metrics": [
         {
           "name": "exact_match",

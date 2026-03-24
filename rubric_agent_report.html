@@ -63,28 +63,28 @@
 <body>
   <div class="header">
     <h1>📐 Rubric</h1>
-    <p>rubric-eval &nbsp;·&nbsp; 2026-03-24T23:42:22.922063</p>
+    <p>rubric-eval &nbsp;·&nbsp; 2026-03-24T21:51:16.604716</p>
   </div>
 
   <div class="stats">
     <div class="stat-card pass-rate">
-      <div class="value">20.0%</div>
+      <div class="value">66.7%</div>
       <div class="label">Pass Rate</div>
     </div>
     <div class="stat-card score">
-      <div class="value">0.467</div>
+      <div class="value">0.867</div>
       <div class="label">Avg Score</div>
     </div>
     <div class="stat-card passed-count">
-      <div class="value">1</div>
+      <div class="value">2</div>
       <div class="label">Passed</div>
     </div>
     <div class="stat-card failed-count">
-      <div class="value">4</div>
+      <div class="value">1</div>
       <div class="label">Failed</div>
     </div>
     <div class="stat-card">
-      <div class="value">5</div>
+      <div class="value">3</div>
       <div class="label">Total Tests</div>
     </div>
   </div>
@@ -116,185 +116,148 @@
   <script>
     const DATA = {
   "summary": {
-    "total": 5,
-    "passed": 1,
-    "failed": 4,
-    "pass_rate": 0.2,
-    "avg_score": 0.4667
+    "total": 3,
+    "passed": 2,
+    "failed": 1,
+    "pass_rate": 0.6667,
+    "avg_score": 0.8667
   },
   "metrics": {
-    "exact_match": {
-      "pass_rate": 0.2,
-      "avg_score": 0.2,
-      "total": 5
+    "tool_call_accuracy": {
+      "pass_rate": 0.6666666666666666,
+      "avg_score": 0.8333333333333334,
+      "total": 3
     },
-    "contains": {
-      "pass_rate": 0.2,
-      "avg_score": 0.2,
-      "total": 5
-    },
-    "not_contains": {
+    "trace_quality": {
       "pass_rate": 1.0,
       "avg_score": 1.0,
-      "total": 5
+      "total": 3
+    },
+    "task_completion": {
+      "pass_rate": 0.6666666666666666,
+      "avg_score": 0.6333333333333333,
+      "total": 3
+    },
+    "latency": {
+      "pass_rate": 1.0,
+      "avg_score": 1.0,
+      "total": 3
     }
   },
-  "started_at": "2026-03-24T23:42:22.922063",
-  "finished_at": "2026-03-24T23:42:22.922195",
+  "started_at": "2026-03-24T21:51:16.604716",
+  "finished_at": "2026-03-24T21:51:16.604796",
   "results": [
     {
-      "name": "Capital of France",
-      "input": "What is the capital of France?",
-      "actual_output": "The capital of France is Paris.",
-      "expected_output": "The capital of France is Paris.",
+      "name": "Flight booking",
+      "input": "Book a flight from Cairo to Paris",
+      "actual_output": "I've successfully booked your flight from Cairo to Paris (AF123). Your booking reference is RUB-2024-001.",
+      "expected_output": "I've booked your flight to Paris.",
       "passed": true,
-      "overall_score": 1.0,
+      "overall_score": 0.925,
       "error": null,
-      "evaluated_at": "2026-03-24T23:42:22.922094",
+      "evaluated_at": "2026-03-24T21:51:16.604750",
       "metrics": [
         {
-          "name": "exact_match",
+          "name": "tool_call_accuracy",
           "score": 1.0,
           "passed": true,
-          "reason": "Output matches expected."
+          "reason": "All tool requirements met. Called: ['search_flights', 'check_availability', 'book_flight']"
         },
         {
-          "name": "contains",
+          "name": "trace_quality",
           "score": 1.0,
           "passed": true,
-          "reason": "Found all required substrings."
+          "reason": "Trace looks clean. 7 steps taken."
         },
         {
-          "name": "not_contains",
+          "name": "task_completion",
+          "score": 0.7,
+          "passed": true,
+          "reason": "Heuristic task completion score: 0.70. Pass a judge_fn for LLM-based evaluation."
+        },
+        {
+          "name": "latency",
           "score": 1.0,
           "passed": true,
-          "reason": "No forbidden strings found."
+          "reason": "Latency 0ms is within budget (5000ms)."
         }
       ]
     },
     {
-      "name": "Basic math",
-      "input": "What is 2 + 2?",
-      "actual_output": "2 + 2 = 4",
-      "expected_output": "4",
+      "name": "Weather check \u2014 forbidden tool test",
+      "input": "What is the weather in Cairo?",
+      "actual_output": "The weather in Cairo is sunny, 32\u00b0C. I've emailed you the forecast.",
+      "expected_output": null,
       "passed": false,
-      "overall_score": 0.3333,
+      "overall_score": 0.75,
       "error": null,
-      "evaluated_at": "2026-03-24T23:42:22.922123",
+      "evaluated_at": "2026-03-24T21:51:16.604775",
       "metrics": [
         {
-          "name": "exact_match",
-          "score": 0.0,
+          "name": "tool_call_accuracy",
+          "score": 0.5,
           "passed": false,
-          "reason": "Expected: '4'\nActual:   '2 + 2 = 4'"
+          "reason": "Called forbidden tools: ['send_email']"
         },
         {
-          "name": "contains",
-          "score": 0.0,
-          "passed": false,
-          "reason": "Missing: ['paris']"
-        },
-        {
-          "name": "not_contains",
+          "name": "trace_quality",
           "score": 1.0,
           "passed": true,
-          "reason": "No forbidden strings found."
+          "reason": "Trace looks clean. 2 steps taken."
+        },
+        {
+          "name": "task_completion",
+          "score": 0.5,
+          "passed": false,
+          "reason": "Heuristic task completion score: 0.50. Pass a judge_fn for LLM-based evaluation."
+        },
+        {
+          "name": "latency",
+          "score": 1.0,
+          "passed": true,
+          "reason": "Latency 0ms is within budget (5000ms)."
         }
       ]
     },
     {
-      "name": "Shakespeare authorship",
-      "input": "Who wrote Hamlet?",
-      "actual_output": "Hamlet was written by William Shakespeare.",
-      "expected_output": "William Shakespeare",
-      "passed": false,
-      "overall_score": 0.3333,
+      "name": "Document summarization",
+      "input": "Summarize this document",
+      "actual_output": "Here is the summary of the document: ...",
+      "expected_output": null,
+      "passed": true,
+      "overall_score": 0.925,
       "error": null,
-      "evaluated_at": "2026-03-24T23:42:22.922142",
+      "evaluated_at": "2026-03-24T21:51:16.604790",
       "metrics": [
         {
-          "name": "exact_match",
-          "score": 0.0,
-          "passed": false,
-          "reason": "Expected: 'william shakespeare'\nActual:   'hamlet was written by william shakespeare.'"
-        },
-        {
-          "name": "contains",
-          "score": 0.0,
-          "passed": false,
-          "reason": "Missing: ['paris']"
-        },
-        {
-          "name": "not_contains",
+          "name": "tool_call_accuracy",
           "score": 1.0,
           "passed": true,
-          "reason": "No forbidden strings found."
-        }
-      ]
-    },
-    {
-      "name": "Capital of Egypt",
-      "input": "What is the capital of Egypt?",
-      "actual_output": "The capital of Egypt is Cairo.",
-      "expected_output": "Cairo",
-      "passed": false,
-      "overall_score": 0.3333,
-      "error": null,
-      "evaluated_at": "2026-03-24T23:42:22.922154",
-      "metrics": [
-        {
-          "name": "exact_match",
-          "score": 0.0,
-          "passed": false,
-          "reason": "Expected: 'cairo'\nActual:   'the capital of egypt is cairo.'"
+          "reason": "All tool requirements met. Called: ['fetch_document', 'summarize_text']"
         },
         {
-          "name": "contains",
-          "score": 0.0,
-          "passed": false,
-          "reason": "Missing: ['paris']"
-        },
-        {
-          "name": "not_contains",
+          "name": "trace_quality",
           "score": 1.0,
           "passed": true,
-          "reason": "No forbidden strings found."
-        }
-      ]
-    },
-    {
-      "name": "Largest planet \u2014 should fail",
-      "input": "What is the largest planet?",
-      "actual_output": "I believe it might be Saturn.",
-      "expected_output": "Jupiter",
-      "passed": false,
-      "overall_score": 0.3333,
-      "error": null,
-      "evaluated_at": "2026-03-24T23:42:22.922165",
-      "metrics": [
-        {
-          "name": "exact_match",
-          "score": 0.0,
-          "passed": false,
-          "reason": "Expected: 'jupiter'\nActual:   'i believe it might be saturn.'"
+          "reason": "Trace looks clean. 4 steps taken."
         },
         {
-          "name": "contains",
-          "score": 0.0,
-          "passed": false,
-          "reason": "Missing: ['paris']"
+          "name": "task_completion",
+          "score": 0.7,
+          "passed": true,
+          "reason": "Heuristic task completion score: 0.70. Pass a judge_fn for LLM-based evaluation."
         },
         {
-          "name": "not_contains",
+          "name": "latency",
           "score": 1.0,
           "passed": true,
-          "reason": "No forbidden strings found."
+          "reason": "Latency 0ms is within budget (5000ms)."
         }
       ]
     }
   ]
 };
-    const PASS_RATE = 20.0;
+    const PASS_RATE = 66.7;
 
     document.getElementById('progressFill').style.width = PASS_RATE + '%';
 
