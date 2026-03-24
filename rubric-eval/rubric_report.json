@@ -1,0 +1,180 @@
+{
+  "summary": {
+    "total": 5,
+    "passed": 1,
+    "failed": 4,
+    "pass_rate": 0.2,
+    "avg_score": 0.4667
+  },
+  "metrics": {
+    "exact_match": {
+      "pass_rate": 0.2,
+      "avg_score": 0.2,
+      "total": 5
+    },
+    "contains": {
+      "pass_rate": 0.2,
+      "avg_score": 0.2,
+      "total": 5
+    },
+    "not_contains": {
+      "pass_rate": 1.0,
+      "avg_score": 1.0,
+      "total": 5
+    }
+  },
+  "started_at": "2026-03-24T21:50:08.074352",
+  "finished_at": "2026-03-24T21:50:08.074447",
+  "results": [
+    {
+      "name": "Capital of France",
+      "input": "What is the capital of France?",
+      "actual_output": "The capital of France is Paris.",
+      "expected_output": "The capital of France is Paris.",
+      "passed": true,
+      "overall_score": 1.0,
+      "error": null,
+      "evaluated_at": "2026-03-24T21:50:08.074364",
+      "metrics": [
+        {
+          "name": "exact_match",
+          "score": 1.0,
+          "passed": true,
+          "reason": "Output matches expected."
+        },
+        {
+          "name": "contains",
+          "score": 1.0,
+          "passed": true,
+          "reason": "Found all required substrings."
+        },
+        {
+          "name": "not_contains",
+          "score": 1.0,
+          "passed": true,
+          "reason": "No forbidden strings found."
+        }
+      ]
+    },
+    {
+      "name": "Basic math",
+      "input": "What is 2 + 2?",
+      "actual_output": "2 + 2 = 4",
+      "expected_output": "4",
+      "passed": false,
+      "overall_score": 0.3333,
+      "error": null,
+      "evaluated_at": "2026-03-24T21:50:08.074422",
+      "metrics": [
+        {
+          "name": "exact_match",
+          "score": 0.0,
+          "passed": false,
+          "reason": "Expected: '4'\nActual:   '2 + 2 = 4'"
+        },
+        {
+          "name": "contains",
+          "score": 0.0,
+          "passed": false,
+          "reason": "Missing: ['paris']"
+        },
+        {
+          "name": "not_contains",
+          "score": 1.0,
+          "passed": true,
+          "reason": "No forbidden strings found."
+        }
+      ]
+    },
+    {
+      "name": "Shakespeare authorship",
+      "input": "Who wrote Hamlet?",
+      "actual_output": "Hamlet was written by William Shakespeare.",
+      "expected_output": "William Shakespeare",
+      "passed": false,
+      "overall_score": 0.3333,
+      "error": null,
+      "evaluated_at": "2026-03-24T21:50:08.074431",
+      "metrics": [
+        {
+          "name": "exact_match",
+          "score": 0.0,
+          "passed": false,
+          "reason": "Expected: 'william shakespeare'\nActual:   'hamlet was written by william shakespeare.'"
+        },
+        {
+          "name": "contains",
+          "score": 0.0,
+          "passed": false,
+          "reason": "Missing: ['paris']"
+        },
+        {
+          "name": "not_contains",
+          "score": 1.0,
+          "passed": true,
+          "reason": "No forbidden strings found."
+        }
+      ]
+    },
+    {
+      "name": "Capital of Egypt",
+      "input": "What is the capital of Egypt?",
+      "actual_output": "The capital of Egypt is Cairo.",
+      "expected_output": "Cairo",
+      "passed": false,
+      "overall_score": 0.3333,
+      "error": null,
+      "evaluated_at": "2026-03-24T21:50:08.074438",
+      "metrics": [
+        {
+          "name": "exact_match",
+          "score": 0.0,
+          "passed": false,
+          "reason": "Expected: 'cairo'\nActual:   'the capital of egypt is cairo.'"
+        },
+        {
+          "name": "contains",
+          "score": 0.0,
+          "passed": false,
+          "reason": "Missing: ['paris']"
+        },
+        {
+          "name": "not_contains",
+          "score": 1.0,
+          "passed": true,
+          "reason": "No forbidden strings found."
+        }
+      ]
+    },
+    {
+      "name": "Largest planet \u2014 should fail",
+      "input": "What is the largest planet?",
+      "actual_output": "I believe it might be Saturn.",
+      "expected_output": "Jupiter",
+      "passed": false,
+      "overall_score": 0.3333,
+      "error": null,
+      "evaluated_at": "2026-03-24T21:50:08.074444",
+      "metrics": [
+        {
+          "name": "exact_match",
+          "score": 0.0,
+          "passed": false,
+          "reason": "Expected: 'jupiter'\nActual:   'i believe it might be saturn.'"
+        },
+        {
+          "name": "contains",
+          "score": 0.0,
+          "passed": false,
+          "reason": "Missing: ['paris']"
+        },
+        {
+          "name": "not_contains",
+          "score": 1.0,
+          "passed": true,
+          "reason": "No forbidden strings found."
+        }
+      ]
+    }
+  ]
+}

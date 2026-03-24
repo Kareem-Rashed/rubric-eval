@@ -1,0 +1,237 @@
+"""
+HTML and JSON report generation for Rubric.
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from rubriceval.core.results import EvalReport
+
+
+def generate_html_report(report: EvalReport, output_path: str) -> None:
+    """Generate a self-contained HTML evaluation report."""
+    data = report.to_dict()
+    data_json = json.dumps(data, indent=2)
+
+    html = _HTML_TEMPLATE.replace("{{DATA_JSON}}", data_json)
+    html = html.replace("{{PASS_RATE}}", f"{report.pass_rate * 100:.1f}")
+    html = html.replace("{{TOTAL}}", str(report.total))
+    html = html.replace("{{PASSED}}", str(report.passed))
+    html = html.replace("{{FAILED}}", str(report.failed))
+    html = html.replace("{{AVG_SCORE}}", f"{report.avg_score:.3f}")
+    html = html.replace("{{STARTED_AT}}", report.started_at or "")
+    html = html.replace("{{RUN_NAME}}", report.metadata.get("run_name", "Rubric Eval"))
+
+    Path(output_path).write_text(html, encoding="utf-8")
+
+
+_HTML_TEMPLATE = """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rubric — {{RUN_NAME}}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           background: #0f0f13; color: #e1e1e6; min-height: 100vh; }
+    .header { background: linear-gradient(135deg, #6c63ff 0%, #4ecdc4 100%);
+              padding: 40px; text-align: center; }
+    .header h1 { font-size: 2.4rem; font-weight: 800; letter-spacing: -1px; color: white; }
+    .header p { color: rgba(255,255,255,0.8); margin-top: 6px; font-size: 1rem; }
+    .stats { display: flex; gap: 16px; padding: 28px 40px; flex-wrap: wrap; }
+    .stat-card { background: #1a1a24; border: 1px solid #2a2a3a; border-radius: 12px;
+                 padding: 20px 28px; flex: 1; min-width: 140px; }
+    .stat-card .value { font-size: 2.2rem; font-weight: 700; }
+    .stat-card .label { color: #888; font-size: 0.82rem; text-transform: uppercase;
+                        letter-spacing: 1px; margin-top: 4px; }
+    .pass-rate .value { color: #4ecdc4; }
+    .score .value { color: #6c63ff; }
+    .passed-count .value { color: #2ecc71; }
+    .failed-count .value { color: #e74c3c; }
+    .progress-bar { height: 8px; background: #2a2a3a; border-radius: 4px; margin: 0 40px 28px; }
+    .progress-fill { height: 100%; border-radius: 4px;
+                     background: linear-gradient(90deg, #6c63ff, #4ecdc4);
+                     transition: width 0.6s ease; }
+    .section { padding: 0 40px 32px; }
+    .section h2 { font-size: 1.1rem; font-weight: 600; color: #888; text-transform: uppercase;
+                  letter-spacing: 1px; margin-bottom: 16px; }
+    .results-table { width: 100%; border-collapse: collapse; }
+    .results-table th { background: #1a1a24; color: #888; font-size: 0.8rem;
+                        text-transform: uppercase; letter-spacing: 1px; padding: 12px 16px;
+                        text-align: left; border-bottom: 1px solid #2a2a3a; }
+    .results-table td { padding: 14px 16px; border-bottom: 1px solid #1e1e2a; font-size: 0.9rem; }
+    .results-table tr:hover td { background: #1a1a24; cursor: pointer; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.78rem;
+             font-weight: 600; }
+    .badge-pass { background: rgba(46,204,113,0.15); color: #2ecc71; }
+    .badge-fail { background: rgba(231,76,60,0.15); color: #e74c3c; }
+    .score-bar { display: flex; align-items: center; gap: 8px; }
+    .score-bar-inner { flex: 1; height: 6px; background: #2a2a3a; border-radius: 3px; }
+    .score-bar-fill { height: 100%; border-radius: 3px; }
+    .metric-details { display: none; padding: 16px; background: #14141e;
+                      border-bottom: 1px solid #2a2a3a; }
+    .metric-row { display: flex; justify-content: space-between; align-items: center;
+                  padding: 8px 0; border-bottom: 1px solid #1e1e2a; font-size: 0.85rem; }
+    .metric-row:last-child { border-bottom: none; }
+    .metric-name { color: #aaa; }
+    .metric-score { font-weight: 600; }
+    .metric-reason { color: #666; font-size: 0.8rem; margin-top: 4px; font-style: italic; }
+    .input-output { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .io-box { background: #1a1a24; border: 1px solid #2a2a3a; border-radius: 8px; padding: 12px; }
+    .io-box .io-label { font-size: 0.75rem; color: #666; text-transform: uppercase;
+                        letter-spacing: 1px; margin-bottom: 6px; }
+    .io-box .io-content { font-size: 0.85rem; color: #ccc; white-space: pre-wrap;
+                          word-break: break-word; }
+    .footer { text-align: center; padding: 32px; color: #444; font-size: 0.82rem; }
+    .footer a { color: #6c63ff; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📐 Rubric</h1>
+    <p>{{RUN_NAME}} &nbsp;·&nbsp; {{STARTED_AT}}</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card pass-rate">
+      <div class="value">{{PASS_RATE}}%</div>
+      <div class="label">Pass Rate</div>
+    </div>
+    <div class="stat-card score">
+      <div class="value">{{AVG_SCORE}}</div>
+      <div class="label">Avg Score</div>
+    </div>
+    <div class="stat-card passed-count">
+      <div class="value">{{PASSED}}</div>
+      <div class="label">Passed</div>
+    </div>
+    <div class="stat-card failed-count">
+      <div class="value">{{FAILED}}</div>
+      <div class="label">Failed</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">{{TOTAL}}</div>
+      <div class="label">Total Tests</div>
+    </div>
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <div class="section">
+    <h2>Test Results</h2>
+    <table class="results-table" id="resultsTable">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Test Case</th>
+          <th>Score</th>
+          <th>Metrics</th>
+        </tr>
+      </thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    Generated by <a href="https://github.com/kareemrashed/rubric-eval" target="_blank">Rubric</a>
+    — The independent LLM evaluation framework
+  </div>
+
+  <script>
+    const DATA = {{DATA_JSON}};
+    const PASS_RATE = {{PASS_RATE}};
+
+    document.getElementById('progressFill').style.width = PASS_RATE + '%';
+
+    function getScoreColor(score) {
+      if (score >= 0.8) return '#2ecc71';
+      if (score >= 0.5) return '#f39c12';
+      return '#e74c3c';
+    }
+
+    const tbody = document.getElementById('resultsBody');
+
+    DATA.results.forEach((result, idx) => {
+      const color = getScoreColor(result.overall_score);
+      const badge = result.passed
+        ? '<span class="badge badge-pass">PASS</span>'
+        : '<span class="badge badge-fail">FAIL</span>';
+
+      const metricPills = result.metrics.map(m => {
+        const c = m.passed ? '#2ecc71' : '#e74c3c';
+        return `<span style="color:${c}; font-size:0.8rem; margin-right:6px;">${m.name}</span>`;
+      }).join('');
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${badge}</td>
+        <td style="max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+          ${result.name || result.input}
+        </td>
+        <td>
+          <div class="score-bar">
+            <div class="score-bar-inner">
+              <div class="score-bar-fill" style="width:${result.overall_score*100}%; background:${color};"></div>
+            </div>
+            <span style="color:${color}; font-weight:600; min-width:42px;">${result.overall_score.toFixed(3)}</span>
+          </div>
+        </td>
+        <td>${metricPills}</td>
+      `;
+      row.style.cursor = 'pointer';
+      row.onclick = () => toggleDetails(idx);
+      tbody.appendChild(row);
+
+      // Detail row
+      const metricDetails = result.metrics.map(m => {
+        const c = m.passed ? '#2ecc71' : '#e74c3c';
+        const reason = m.reason ? `<div class="metric-reason">${m.reason}</div>` : '';
+        return `
+          <div class="metric-row">
+            <span class="metric-name">${m.name}</span>
+            <span class="metric-score" style="color:${c}">${m.score.toFixed(3)}</span>
+          </div>
+          ${reason}
+        `;
+      }).join('');
+
+      const expectedHtml = result.expected_output
+        ? `<div class="io-box"><div class="io-label">Expected</div>
+           <div class="io-content">${escHtml(result.expected_output)}</div></div>`
+        : '';
+
+      const detailRow = document.createElement('tr');
+      detailRow.innerHTML = `
+        <td colspan="4">
+          <div class="metric-details" id="detail-${idx}">
+            <div class="input-output">
+              <div class="io-box"><div class="io-label">Input</div>
+                <div class="io-content">${escHtml(result.input)}</div></div>
+              <div class="io-box"><div class="io-label">Actual Output</div>
+                <div class="io-content">${escHtml(result.actual_output)}</div></div>
+              ${expectedHtml}
+            </div>
+            <div style="margin-top:16px;">${metricDetails}</div>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(detailRow);
+    });
+
+    function toggleDetails(idx) {
+      const el = document.getElementById('detail-' + idx);
+      el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function escHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+  </script>
+</body>
+</html>"""
