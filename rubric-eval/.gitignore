@@ -1,0 +1,307 @@
+# ============================================================================
+# Python
+# ============================================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# ============================================================================
+# IDE & Editor
+# ============================================================================
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+*.ipr
+*.swp
+*.swo
+*~
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+.vim/
+*.swp
+*.swo
+*~
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Nano
+.nano_history
+
+# ============================================================================
+# Operating System
+# ============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+
+# ============================================================================
+# Project-Specific
+# ============================================================================
+
+# Rubric evaluation reports
+rubric_report.html
+rubric_report.json
+rubric_agent_report.html
+rubric_agent_report.json
+eval_report_*.html
+eval_report_*.json
+
+# Generated reports
+reports/
+*.html
+*.json
+
+# Test artifacts
+test_output/
+test_reports/
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Build artifacts
+build/
+dist/
+*.whl
+*.tar.gz
+
+# Poetry
+poetry.lock
+
+# Node modules (if used for docs/frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ============================================================================
+# Credentials & Secrets
+# ============================================================================
+
+# API keys and secrets
+.env
+.env.local
+.env.*.local
+secrets.json
+credentials.json
+*.key
+*.pem
+
+# AWS
+.aws/
+
+# Google Cloud
+.gcloud/
+
+# ============================================================================
+# Documentation
+# ============================================================================
+
+# Sphinx
+docs/_build/
+docs/.buildinfo
+
+# Generated docs
+site/
+docs_build/
+
+# ============================================================================
+# Package Manager
+# ============================================================================
+
+# pip
+requirements-lock.txt
+pip-log.txt
+
+# Poetry
+poetry.lock
+
+# pipenv
+Pipfile.lock
+
+# ============================================================================
+# CI/CD
+# ============================================================================
+
+# GitHub Actions
+.github/workflows/*.log
+
+# GitLab CI
+.gitlab-ci.yml.bak
+
+# ============================================================================
+# Miscellaneous
+# ============================================================================
+
+# OS-specific hidden files
+.DS_Store
+Thumbs.db
+
+# Editor backups
+*.bak
+*.backup
+*~
+
+# Stray files
+*.orig
+*.rej
+
+# Local development
+local_config.py
+dev_config.json
+
+# ============================================================================
+# END .gitignore
+# ============================================================================
