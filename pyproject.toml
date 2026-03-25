@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "rubric-eval"
-version = "0.1.0"
+version = "0.1.1"
 description = "The independent LLM & AI agent evaluation framework. pytest for AI."
 readme = "README.md"
 license = { text = "MIT" }
@@ -53,11 +53,11 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/kareemrashed/rubric-eval"
-Documentation = "https://github.com/kareemrashed/rubric-eval#readme"
-Repository = "https://github.com/kareemrashed/rubric-eval"
-"Bug Tracker" = "https://github.com/kareemrashed/rubric-eval/issues"
-Changelog = "https://github.com/kareemrashed/rubric-eval/blob/main/CHANGELOG.md"
+Homepage = "https://kareem-rashed.github.io/rubric-eval"
+Documentation = "https://github.com/Kareem-Rashed/rubric-eval#readme"
+Repository = "https://github.com/Kareem-Rashed/rubric-eval"
+"Bug Tracker" = "https://github.com/Kareem-Rashed/rubric-eval/issues"
+Changelog = "https://github.com/Kareem-Rashed/rubric-eval/blob/main/CHANGELOG.md"
 
 [project.scripts]
 rubric = "rubriceval.cli.main:main"
