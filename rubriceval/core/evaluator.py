@@ -37,7 +37,7 @@ def evaluate(
         verbose: Print progress and results to stdout.
         max_workers: Number of parallel workers (1 = sequential).
         run_name: Optional label for this evaluation run.
-        raise_on_failure: Raise AssertionError if any test case fails (for CI).
+        raise_on_failure: Call sys.exit(1) if any test case fails (for CI).
         output_json: If set, write JSON report to this file path.
         output_html: If set, write HTML report to this file path.
 
@@ -59,6 +59,15 @@ def evaluate(
         )
         results.print_summary()
     """
+    # Pick up CLI-injected env vars when flags aren't set directly
+    import os as _os
+    if output_html is None:
+        output_html = _os.environ.get("RUBRIC_OUTPUT_HTML") or None
+    if output_json is None:
+        output_json = _os.environ.get("RUBRIC_OUTPUT_JSON") or None
+    if not raise_on_failure:
+        raise_on_failure = _os.environ.get("RUBRIC_RAISE_ON_FAILURE") == "1"
+
     report = EvalReport(
         metadata={"run_name": run_name or "rubric-eval"},
     )
@@ -127,10 +136,11 @@ def evaluate(
             print(f"  🌐 HTML report written to: {output_html}")
 
     if raise_on_failure and report.failed > 0:
-        raise AssertionError(
-            f"Rubric: {report.failed}/{report.total} test cases failed. "
-            f"Pass rate: {report.pass_rate:.1%}"
+        print(
+            f"\n❌ Rubric: {report.failed}/{report.total} test cases failed "
+            f"(pass rate: {report.pass_rate:.1%})"
         )
+        sys.exit(1)
 
     return report
 
@@ -142,5 +152,6 @@ def _print_test_result(result: TestResult):
     for mr in result.metric_results:
         icon = "  ✓" if mr.passed else "  ✗"
         reason = f" — {mr.reason}" if mr.reason else ""
-        print(f"      {icon} {mr.metric_name}: {mr.score:.3f}{reason[:80]}")
+        reason_display = reason.split('\n')[0][:120] if reason else ""
+        print(f"      {icon} {mr.metric_name}: {mr.score:.3f}{reason_display}")
     print()

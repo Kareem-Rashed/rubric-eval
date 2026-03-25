@@ -34,7 +34,10 @@ from __future__ import annotations
 
 from typing import Union
 
-import pytest
+try:
+    import pytest
+except ImportError:
+    pytest = None  # type: ignore
 
 from rubriceval.core.test_case import AgentTestCase, TestCase
 from rubriceval.core.results import MetricResult, TestResult

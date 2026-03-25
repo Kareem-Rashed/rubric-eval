@@ -73,8 +73,8 @@ report = rubric.evaluate(
     output_json="report.json",   # for CI/CD
 )
 
-# 3. View results
-report.print_summary()
+# 3. View results  (evaluate() already prints a full summary when verbose=True)
+# Call report.print_summary() again only if you set verbose=False above
 ```
 
 **Output:**
@@ -308,7 +308,7 @@ Or use `raise_on_failure=True`:
 rubric.evaluate(
     test_cases=test_cases,
     metrics=[...],
-    raise_on_failure=True,  # exits with code 1 if any test fails
+    raise_on_failure=True,  # calls sys.exit(1) if any test fails
 )
 ```
 

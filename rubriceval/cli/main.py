@@ -74,9 +74,11 @@ def _run_file(args):
         print(f"❌ File not found: {filepath}")
         sys.exit(1)
 
-    # Inject CLI args into environment so eval files can pick them up
+    # Inject CLI args into environment so evaluate() picks them up transparently
     os.environ["RUBRIC_OUTPUT_HTML"] = args.output_html or ""
     os.environ["RUBRIC_OUTPUT_JSON"] = args.output_json or ""
+    if args.fail_on_error:
+        os.environ["RUBRIC_RAISE_ON_FAILURE"] = "1"
 
     # Load and execute the file
     spec = importlib.util.spec_from_file_location("rubric_eval_file", filepath)
