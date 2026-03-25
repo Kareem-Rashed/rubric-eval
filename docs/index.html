@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rubric — The Independent LLM Evaluation Framework</title>
+  <meta name="description" content="pytest for AI. Evaluate LLM outputs and AI agent behavior with a zero-dependency Python framework. Open source, neutral, and built for developers." />
+  <meta property="og:title" content="Rubric — pytest for AI" />
+  <meta property="og:description" content="The independent LLM & AI agent evaluation framework. No cloud required. No lock-in. Just evals." />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #08080d;
+      --surface: #0f0f17;
+      --surface2: #14141e;
+      --surface3: #1a1a26;
+      --border: #20202e;
+      --border2: #2a2a3c;
+      --text: #e4e4ef;
+      --muted: #6b6b88;
+      --accent: #7c6fff;
+      --accent2: #4ecdc4;
+      --green: #34d399;
+      --radius: 12px;
+      --radius-lg: 18px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(8,8,13,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 48px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo {
+      font-size: 1.1rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-decoration: none;
+      letter-spacing: -0.3px;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      background: var(--accent);
+      color: white !important;
+      padding: 7px 18px;
+      border-radius: 8px;
+      font-weight: 600 !important;
+      font-size: 0.85rem !important;
+      transition: opacity 0.15s !important;
+    }
+    .nav-cta:hover { opacity: 0.85; color: white !important; }
+
+    /* ── Hero ── */
+    .hero {
+      min-height: calc(100vh - 60px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 80px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -200px; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 600px;
+      background: radial-gradient(ellipse at center, rgba(124,111,255,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -200px; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(ellipse at center, rgba(78,205,196,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(124,111,255,0.1);
+      border: 1px solid rgba(124,111,255,0.25);
+      color: #a99fff;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 20px;
+      margin-bottom: 28px;
+      letter-spacing: 0.3px;
+    }
+    .hero-badge-dot {
+      width: 6px; height: 6px;
+      background: var(--accent2);
+      border-radius: 50%;
+    }
+    h1 {
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1.08;
+      margin-bottom: 24px;
+      max-width: 860px;
+    }
+    h1 .gradient {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 60%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      color: var(--muted);
+      max-width: 600px;
+      line-height: 1.7;
+      margin-bottom: 40px;
+    }
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 48px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #5a52d5);
+      color: white;
+      padding: 13px 28px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-decoration: none;
+      transition: opacity 0.15s, transform 0.15s;
+      box-shadow: 0 4px 24px rgba(124,111,255,0.3);
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-secondary {
+      background: var(--surface3);
+      color: var(--text);
+      padding: 13px 28px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      border: 1px solid var(--border2);
+      transition: border-color 0.15s, transform 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--accent); transform: translateY(-1px); }
+
+    .install-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 0.9rem;
+    }
+    .install-box .prompt { color: var(--muted); user-select: none; }
+    .install-box .cmd { color: var(--text); }
+    .install-box .pkg { color: var(--accent2); }
+    .install-copy {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0;
+      font-size: 0.82rem;
+      transition: color 0.15s;
+      margin-left: 6px;
+    }
+    .install-copy:hover { color: var(--text); }
+
+    /* ── Social proof strip ── */
+    .strip {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 48px;
+      flex-wrap: wrap;
+      background: var(--surface);
+    }
+    .strip-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .strip-item span { color: var(--text); font-weight: 700; }
+
+    /* ── Section ── */
+    section { padding: 80px 24px; max-width: 1100px; margin: 0 auto; }
+    section h2 {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+    section .section-sub {
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 540px;
+      margin-bottom: 48px;
+      line-height: 1.7;
+    }
+    .section-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--accent2);
+      margin-bottom: 12px;
+    }
+
+    /* ── Features Grid ── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .feature-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+    .feature-icon {
+      font-size: 1.6rem;
+      margin-bottom: 14px;
+      display: block;
+    }
+    .feature-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .feature-card p {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    /* ── Code block ── */
+    .code-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+    @media (max-width: 768px) {
+      .code-section { grid-template-columns: 1fr; }
+    }
+    .code-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .code-block-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 18px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+    }
+    .code-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .code-block-title {
+      margin-left: 6px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+    .code-block pre {
+      padding: 20px;
+      font-size: 0.8rem;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      line-height: 1.7;
+      overflow-x: auto;
+      color: #c9d1d9;
+    }
+    .kw { color: #ff79c6; }
+    .fn { color: #79b8ff; }
+    .cls { color: #79c0ff; }
+    .str { color: #9ecbff; }
+    .cmt { color: #586069; font-style: italic; }
+    .num { color: #f0c05a; }
+    .param { color: #e3b341; }
+
+    /* ── Metrics table ── */
+    .metrics-showcase {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .metric-group {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .metric-group-header {
+      padding: 14px 18px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .metric-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border2);
+      font-size: 0.85rem;
+    }
+    .metric-item:last-child { border-bottom: none; }
+    .metric-item-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .metric-item-name { font-weight: 600; }
+    .metric-item-desc { font-size: 0.75rem; color: var(--muted); margin-top: 1px; }
+
+    /* ── CTA Banner ── */
+    .cta-banner {
+      background: linear-gradient(135deg, rgba(124,111,255,0.1) 0%, rgba(78,205,196,0.1) 100%);
+      border: 1px solid rgba(124,111,255,0.2);
+      border-radius: var(--radius-lg);
+      padding: 56px 48px;
+      text-align: center;
+    }
+    .cta-banner h2 { margin-bottom: 12px; }
+    .cta-banner p { color: var(--muted); margin-bottom: 32px; }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      max-width: 100%;
+    }
+    .footer-logo {
+      font-size: 0.95rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .footer-copy { font-size: 0.8rem; color: var(--muted); }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { color: var(--muted); text-decoration: none; font-size: 0.82rem; transition: color 0.15s; }
+    .footer-links a:hover { color: var(--text); }
+
+    @media (max-width: 640px) {
+      nav { padding: 0 20px; }
+      .hero { padding: 60px 20px; }
+      .strip { gap: 24px; padding: 16px 20px; }
+      section { padding: 56px 20px; }
+      .cta-banner { padding: 40px 24px; }
+      footer { padding: 32px 20px; flex-direction: column; text-align: center; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav>
+    <a href="#" class="nav-logo">◈ Rubric</a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#quickstart">Quick Start</a></li>
+      <li><a href="#metrics">Metrics</a></li>
+      <li><a href="https://github.com/kareemrashed/rubric-eval" target="_blank">GitHub</a></li>
+      <li><a href="https://github.com/kareemrashed/rubric-eval#readme" target="_blank" class="nav-cta">Docs →</a></li>
+    </ul>
+  </nav>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      v0.1.0 · Open Source · MIT License
+    </div>
+    <h1>
+      <span class="gradient">pytest</span> for&nbsp;AI.
+    </h1>
+    <p class="hero-sub">
+      Evaluate LLM outputs and AI agent behavior with a zero-dependency Python framework.
+      Neutral, extensible, and built for developers — not owned by any AI company.
+    </p>
+    <div class="hero-actions">
+      <a href="#quickstart" class="btn-primary">Get Started →</a>
+      <a href="https://github.com/kareemrashed/rubric-eval" target="_blank" class="btn-secondary">View on GitHub</a>
+    </div>
+    <div class="install-box">
+      <span class="prompt">$</span>
+      <span class="cmd">pip install </span><span class="pkg">rubric-eval</span>
+      <button class="install-copy" onclick="copyInstall(this)" title="Copy">⎘ Copy</button>
+    </div>
+  </div>
+
+  <!-- Strip -->
+  <div class="strip">
+    <div class="strip-item">✦ <span>Zero</span>&nbsp;required dependencies</div>
+    <div class="strip-item">✦ <span>Native</span>&nbsp;pytest integration</div>
+    <div class="strip-item">✦ <span>First-class</span>&nbsp;agent trace eval</div>
+    <div class="strip-item">✦ Works with <span>any</span>&nbsp;LLM</div>
+    <div class="strip-item">✦ <span>Local</span>&nbsp;HTML reports</div>
+  </div>
+
+  <!-- Features -->
+  <section id="features">
+    <div class="section-label">Why Rubric</div>
+    <h2>Built for developers.<br>Not for any AI company.</h2>
+    <p class="section-sub">
+      After Promptfoo joined OpenAI, the community needed a truly independent evaluation
+      framework. Rubric is that answer — open source forever, with no cloud lock-in.
+    </p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">🤖</span>
+        <h3>First-Class Agent Evals</h3>
+        <p>Evaluate multi-step reasoning, tool call sequences, trace quality, latency budgets, and cost — not just final outputs.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🔌</span>
+        <h3>Works With Any LLM</h3>
+        <p>Pass any callable as your judge function. Native support for OpenAI, Anthropic, and Ollama — or wire up your own.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📦</span>
+        <h3>Zero Required Dependencies</h3>
+        <p>Core string metrics work out of the box. Install only what you need via extras: <code>[semantic]</code>, <code>[openai]</code>, <code>[anthropic]</code>.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🧪</span>
+        <h3>Native pytest Integration</h3>
+        <p>Drop-in <code>rubric_eval</code> fixture. Your LLM evals live alongside your unit tests — in the same <code>pytest</code> run.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📊</span>
+        <h3>Beautiful HTML Reports</h3>
+        <p>Self-contained, interactive HTML dashboards. No server required. Filter by pass/fail, drill into metric breakdowns.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🛡️</span>
+        <h3>Neutral &amp; Independent</h3>
+        <p>MIT licensed. Not owned by OpenAI, Anthropic, or any model provider. Evaluate any model with the same unbiased framework.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Start -->
+  <section id="quickstart">
+    <div class="section-label">Quick Start</div>
+    <h2>Up and running<br>in 5 minutes.</h2>
+    <p class="section-sub">
+      Install, write test cases, run metrics. That's it.
+    </p>
+    <div class="code-section">
+      <div>
+        <div class="code-block" style="margin-bottom: 20px;">
+          <div class="code-block-header">
+            <div class="code-dot" style="background:#ff5f57"></div>
+            <div class="code-dot" style="background:#febc2e"></div>
+            <div class="code-dot" style="background:#28c840"></div>
+            <span class="code-block-title">basic_eval.py</span>
+          </div>
+          <pre><span class="kw">import</span> rubriceval <span class="kw">as</span> rubric
+
+<span class="cmt"># Your LLM under test</span>
+<span class="kw">def</span> <span class="fn">my_llm</span>(prompt):
+    <span class="kw">return</span> <span class="str">"The capital of France is Paris."</span>
+
+results = rubric.<span class="fn">evaluate</span>(
+    test_cases=[
+        rubric.<span class="cls">TestCase</span>(
+            input=<span class="str">"What is the capital of France?"</span>,
+            actual_output=<span class="fn">my_llm</span>(<span class="str">"..."</span>),
+            expected_output=<span class="str">"Paris"</span>,
+        )
+    ],
+    metrics=[
+        rubric.<span class="cls">Contains</span>(<span class="str">"Paris"</span>),
+        rubric.<span class="cls">NotContains</span>(<span class="str">"I don't know"</span>),
+        rubric.<span class="cls">LLMJudge</span>(criteria=<span class="str">"Is the answer correct?"</span>),
+    ],
+    output_html=<span class="str">"report.html"</span>,
+)</pre>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <div class="code-dot" style="background:#ff5f57"></div>
+            <div class="code-dot" style="background:#febc2e"></div>
+            <div class="code-dot" style="background:#28c840"></div>
+            <span class="code-block-title">test_my_agent.py (pytest)</span>
+          </div>
+          <pre><span class="kw">def</span> <span class="fn">test_agent_books_flight</span>(rubric_eval):
+    rubric_eval.<span class="fn">add_case</span>(
+        rubric.<span class="cls">AgentTestCase</span>(
+            input=<span class="str">"Book a flight to Tokyo"</span>,
+            actual_output=agent.<span class="fn">run</span>(<span class="str">"..."</span>),
+            expected_tools=[<span class="str">"search_flights"</span>, <span class="str">"book_flight"</span>],
+            tool_calls=agent.tool_calls,
+        ),
+        metrics=[
+            rubric.<span class="cls">ToolCallAccuracy</span>(),
+            rubric.<span class="cls">LatencyMetric</span>(max_ms=<span class="num">5000</span>),
+        ],
+    )
+    <span class="cmt"># Auto-asserts on teardown ✓</span></pre>
+        </div>
+      </div>
+      <div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <div class="code-dot" style="background:#ff5f57"></div>
+            <div class="code-dot" style="background:#febc2e"></div>
+            <div class="code-dot" style="background:#28c840"></div>
+            <span class="code-block-title">agent_eval.py</span>
+          </div>
+          <pre><span class="kw">import</span> rubriceval <span class="kw">as</span> rubric
+
+results = rubric.<span class="fn">evaluate</span>(
+    test_cases=[
+        rubric.<span class="cls">AgentTestCase</span>(
+            name=<span class="str">"flight booking"</span>,
+            input=<span class="str">"Book a flight to Tokyo"</span>,
+            actual_output=agent_output,
+            expected_tools=[
+                <span class="str">"search_flights"</span>,
+                <span class="str">"check_availability"</span>,
+                <span class="str">"book_flight"</span>,
+            ],
+            forbidden_tools=[<span class="str">"send_email"</span>],
+            tool_calls=agent.tool_calls,
+            trace=agent.trace,
+            latency_ms=<span class="num">1240</span>,
+            cost_usd=<span class="num">0.004</span>,
+        )
+    ],
+    metrics=[
+        rubric.<span class="cls">ToolCallAccuracy</span>(check_order=<span class="kw">True</span>),
+        rubric.<span class="cls">TraceQuality</span>(penalize_loops=<span class="kw">True</span>),
+        rubric.<span class="cls">SafetyCompliance</span>(),
+        rubric.<span class="cls">LatencyMetric</span>(max_ms=<span class="num">5000</span>),
+        rubric.<span class="cls">CostMetric</span>(max_cost_usd=<span class="num">0.01</span>),
+    ],
+    output_html=<span class="str">"agent_report.html"</span>,
+)
+
+results.<span class="fn">print_summary</span>()</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Metrics -->
+  <section id="metrics">
+    <div class="section-label">Metrics Library</div>
+    <h2>Every eval you need,<br>ready out of the box.</h2>
+    <p class="section-sub">
+      From simple string checks to LLM-as-judge and full agent trace evaluation.
+      Extend with your own by subclassing <code>BaseMetric</code>.
+    </p>
+    <div class="metrics-showcase">
+      <div class="metric-group">
+        <div class="metric-group-header">
+          <span>◈</span> String Matching
+          <span style="margin-left:auto; font-size:0.7rem; background:rgba(52,211,153,0.1); color:#34d399; padding:2px 8px; border-radius:4px;">No deps</span>
+        </div>
+        <div class="metric-item">
+          <div class="metric-item-dot" style="background:#34d399"></div>
+          <div>
+            <div class="metric-item-name">ExactMatch</div>
+            <div class="metric-item-desc">Binary exact string comparison</div>
+          </div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-item-dot" style="background:#34d399"></div>
+          <div>
+            <div class="metric-item-name">Contains</div>
+            <div class="metric-item-desc">Substring or list of required keywords</div>
+          </div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-item-dot" style="background:#34d399"></div>
+          <div>
+            <div class="metric-item-name">NotContains</div>
+            <div class="metric-item-desc">Forbidden words or patterns</div>
+          </div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-item-dot" style="background:#34d399"></div>
+          <div>
+            <div class="metric-item-name">RegexMatch</div>
+            <div class="metric-item-desc">Regex pattern validation</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="metric-group">
+        <div class="metric-group-header">
+          <span>◈</span> Semantic
+          <span style="margin-left:auto; font-size:0.7rem; background:rgba(124,111,255,0.1); color:#a99fff; padding:2px 8px; border-radius:4px;">[semantic]</span>
+        </div>
+        <div class="metric-item">
+          <div class="metric-item-dot" style="background:#7c6fff"></div>
+          <div>
+            <div class="metric-item-name">SemanticSimilarity</div>
+            <div class="metric-item-desc">Cosine similarity via sentence-transformers</div>
+          </div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-item-dot" style="background:#7c6fff"></div>
+          <div>
+            <div class="metric-item-name">RougeScore</div>
+            <div class="metric-item-desc">N-gram overlap for summarization</div>
+          </div>
+        </div>
+        <div class="metric-group-header" style="border-top:1px solid var(--border)">
+          <span>◈</span> LLM Judge
+          <span style="margin-left:auto; font-size:0.7rem; background:rgba(78,205,196,0.1); color:#4ecdc4; padding:2px 8px; border-radius:4px;">[openai] / [anthropic]</span>
+        </div>
+        <div class="metric-item">
+          <div class="metric-item-dot" style="background:#4ecdc4"></div>
+          <div>
+            <div class="metric-item-name">LLMJudge</div>
+            <div class="metric-item-desc">Custom criteria, any LLM backend</div>
+          </div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-item-dot" style="background:#4ecdc4"></div>
+          <div>
+            <div class="metric-item-name">GEval</div>
+            <div class="metric-item-desc">Chain-of-thought evaluation scoring</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="metric-group">
+        <div class="metric-group-header">
+          <span>◈</span> Agent Metrics
+          <span style="margin-left:auto; font-size:0.7rem; background:rgba(251,191,36,0.1); color:#fbbf24; padding:2px 8px; border-radius:4px;">Built-in</span>
+        </div>
+        <div class="metric-item">
+          <div class="metric-item-dot" style="background:#fbbf24"></div>
+          <div>
+            <div class="metric-item-name">ToolCallAccuracy</div>
+            <div class="metric-item-desc">Expected & forbidden tool verification</div>
+          </div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-item-dot" style="background:#fbbf24"></div>
+          <div>
+            <div class="metric-item-name">TraceQuality</div>
+            <div class="metric-item-desc">Reasoning trace loop detection</div>
+          </div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-item-dot" style="background:#fbbf24"></div>
+          <div>
+            <div class="metric-item-name">ToolCallEfficiency</div>
+            <div class="metric-item-desc">Redundant & failed call detection</div>
+          </div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-item-dot" style="background:#fbbf24"></div>
+          <div>
+            <div class="metric-item-name">SafetyCompliance</div>
+            <div class="metric-item-desc">PII, SQL injection, forbidden tools</div>
+          </div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-item-dot" style="background:#fbbf24"></div>
+          <div>
+            <div class="metric-item-name">LatencyMetric · CostMetric</div>
+            <div class="metric-item-desc">Performance & cost budgets</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section>
+    <div class="cta-banner">
+      <div class="section-label" style="text-align:center">Get Started</div>
+      <h2>Start evaluating your LLM today.</h2>
+      <p>Free, open source, and ready in minutes.</p>
+      <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap;">
+        <a href="https://github.com/kareemrashed/rubric-eval#readme" target="_blank" class="btn-primary">Read the Docs →</a>
+        <a href="https://github.com/kareemrashed/rubric-eval" target="_blank" class="btn-secondary">⭐ Star on GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <span class="footer-logo">◈ Rubric</span>
+    <span class="footer-copy">© 2025 Kareem Rashed · MIT License</span>
+    <div class="footer-links">
+      <a href="https://github.com/kareemrashed/rubric-eval" target="_blank">GitHub</a>
+      <a href="https://pypi.org/project/rubric-eval/" target="_blank">PyPI</a>
+      <a href="https://github.com/kareemrashed/rubric-eval/issues" target="_blank">Issues</a>
+    </div>
+  </footer>
+
+  <script>
+    function copyInstall(btn) {
+      navigator.clipboard.writeText('pip install rubric-eval').then(() => {
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => { btn.textContent = '⎘ Copy'; }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>
