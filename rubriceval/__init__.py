@@ -24,7 +24,7 @@ Quick start:
     results.print_summary()
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __author__ = "Kareem Rashed"
 __license__ = "MIT"
 
