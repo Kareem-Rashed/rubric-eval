@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 72" width="360" height="72">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fb923c"/>
+      <stop offset="100%" style="stop-color:#c2410c"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(8, 8)">
+    <rect width="56" height="56" rx="12" ry="12" fill="url(#bg-grad)"/>
+    <rect x="11" y="9" width="8" height="37" fill="white" rx="1"/>
+    <rect x="11" y="9" width="24" height="8" fill="white" rx="1"/>
+    <rect x="27" y="9" width="8" height="21" fill="white" rx="1"/>
+    <rect x="11" y="22" width="24" height="8" fill="white" rx="1"/>
+    <polygon points="21,30 29,30 42,46 34,46" fill="white"/>
+  </g>
+  <text x="80" y="40" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="32" font-weight="700" fill="white" letter-spacing="-0.5">rubric</text>
+  <text x="81" y="58" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="13" font-weight="400" fill="#f97316" letter-spacing="0.2">pytest for AI</text>
+</svg>
