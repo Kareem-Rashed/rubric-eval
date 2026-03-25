@@ -119,11 +119,11 @@
     .stat-card.s-total::after   { background: var(--muted); }
 
     .stat-value {
-      font-size: 2rem;
-      font-weight: 800;
+      font-size: 1.75rem;
+      font-weight: 600;
       line-height: 1;
       margin-bottom: 5px;
-      letter-spacing: -1px;
+      letter-spacing: -0.5px;
       font-variant-numeric: tabular-nums;
     }
     .stat-card.pass-rate .stat-value { color: var(--acc); }
@@ -168,8 +168,8 @@
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
     }
-    .donut-pct { font-size: 1.35rem; font-weight: 800; color: var(--text); line-height: 1; }
-    .donut-sub { font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-top: 2px; }
+    .donut-pct { font-size: 1.15rem; font-weight: 600; color: var(--text); line-height: 1; }
+    .donut-sub { font-size: 0.56rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-top: 3px; }
     .donut-legend { flex: 1; }
     .donut-legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 0.81rem; }
     .donut-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
@@ -707,7 +707,7 @@
     <div class="header-right">
       <div>
         <div class="header-run-name" id="runName">Rubric Showcase — Demo Report</div>
-        <div class="header-date" id="headerDate">2026-03-25T10:54:41.756245</div>
+        <div class="header-date" id="headerDate">2026-03-25T11:12:54.944042</div>
       </div>
       <div class="header-duration" id="headerDuration" style="display:none">0.0s</div>
     </div>
@@ -839,7 +839,7 @@
     "failed": 2,
     "pass_rate": 0.6667,
     "avg_score": 0.9118,
-    "duration_seconds": 0.000479
+    "duration_seconds": 0.000478
   },
   "metrics": {
     "tool_call_accuracy": {
@@ -868,8 +868,8 @@
       "total": 6
     }
   },
-  "started_at": "2026-03-25T10:54:41.756245",
-  "finished_at": "2026-03-25T10:54:41.756724",
+  "started_at": "2026-03-25T11:12:54.944042",
+  "finished_at": "2026-03-25T11:12:54.944520",
   "metadata": {
     "run_name": "Rubric Showcase \u2014 Demo Report"
   },
@@ -882,7 +882,7 @@
       "passed": true,
       "overall_score": 0.96,
       "error": null,
-      "evaluated_at": "2026-03-25T10:54:41.756305",
+      "evaluated_at": "2026-03-25T11:12:54.944097",
       "is_agent": true,
       "latency_ms": 1498,
       "cost_usd": 0.0031,
@@ -1081,7 +1081,7 @@
       "passed": true,
       "overall_score": 0.94,
       "error": null,
-      "evaluated_at": "2026-03-25T10:54:41.756338",
+      "evaluated_at": "2026-03-25T11:12:54.944130",
       "is_agent": true,
       "latency_ms": 3280,
       "cost_usd": 0.0087,
@@ -1294,7 +1294,7 @@
       "passed": true,
       "overall_score": 0.96,
       "error": null,
-      "evaluated_at": "2026-03-25T10:54:41.756359",
+      "evaluated_at": "2026-03-25T11:12:54.944152",
       "is_agent": true,
       "latency_ms": 872,
       "cost_usd": 0.0024,
@@ -1436,7 +1436,7 @@
       "passed": false,
       "overall_score": 0.79,
       "error": null,
-      "evaluated_at": "2026-03-25T10:54:41.756377",
+      "evaluated_at": "2026-03-25T11:12:54.944169",
       "is_agent": true,
       "latency_ms": 748,
       "cost_usd": 0.0018,
@@ -1573,7 +1573,7 @@
       "passed": true,
       "overall_score": 0.94,
       "error": null,
-      "evaluated_at": "2026-03-25T10:54:41.756394",
+      "evaluated_at": "2026-03-25T11:12:54.944184",
       "is_agent": true,
       "latency_ms": 1124,
       "cost_usd": 0.0042,
@@ -1738,7 +1738,7 @@
       "passed": false,
       "overall_score": 0.8808,
       "error": null,
-      "evaluated_at": "2026-03-25T10:54:41.756717",
+      "evaluated_at": "2026-03-25T11:12:54.944508",
       "is_agent": true,
       "latency_ms": 6480,
       "cost_usd": 0.0019,
@@ -1888,7 +1888,7 @@
 };
     const summary = DATA.summary || {};
     const passRate = summary.pass_rate || 0;
-    const PASS_RATE_PCT = Math.round(passRate * 1000) / 10;
+    const PASS_RATE_PCT = Math.round(passRate * 100);
     let currentFilter = 'all';
     let searchQuery = '';
 

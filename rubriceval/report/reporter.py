@@ -158,11 +158,11 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
     .stat-card.s-total::after   { background: var(--muted); }
 
     .stat-value {
-      font-size: 2rem;
-      font-weight: 800;
+      font-size: 1.75rem;
+      font-weight: 600;
       line-height: 1;
       margin-bottom: 5px;
-      letter-spacing: -1px;
+      letter-spacing: -0.5px;
       font-variant-numeric: tabular-nums;
     }
     .stat-card.pass-rate .stat-value { color: var(--acc); }
@@ -207,8 +207,8 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
     }
-    .donut-pct { font-size: 1.35rem; font-weight: 800; color: var(--text); line-height: 1; }
-    .donut-sub { font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-top: 2px; }
+    .donut-pct { font-size: 1.15rem; font-weight: 600; color: var(--text); line-height: 1; }
+    .donut-sub { font-size: 0.56rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-top: 3px; }
     .donut-legend { flex: 1; }
     .donut-legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 0.81rem; }
     .donut-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
@@ -874,7 +874,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
     const DATA = __DATA_JSON__;
     const summary = DATA.summary || {};
     const passRate = summary.pass_rate || 0;
-    const PASS_RATE_PCT = Math.round(passRate * 1000) / 10;
+    const PASS_RATE_PCT = Math.round(passRate * 100);
     let currentFilter = 'all';
     let searchQuery = '';
 
