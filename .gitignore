@@ -130,6 +130,9 @@ dmypy.json
 # IDE & Editor
 # ============================================================================
 
+# Claude Code
+.claude/
+
 # VSCode
 .vscode/
 *.code-workspace
