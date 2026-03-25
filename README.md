@@ -1,6 +1,10 @@
-# 📐 Rubric
+<div align="center">
+  <img src="docs/logo-wide.svg" alt="Rubric — pytest for AI" width="300"/>
+  <br/><br/>
+  <strong>The independent LLM &amp; AI agent evaluation framework.</strong>
+</div>
 
-**The independent LLM & AI agent evaluation framework.**
+<br/>
 
 [![PyPI version](https://badge.fury.io/py/rubric-eval.svg)](https://badge.fury.io/py/rubric-eval)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
