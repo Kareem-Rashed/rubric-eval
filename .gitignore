@@ -201,6 +201,9 @@ eval_report_*.json
 reports/
 *.html
 *.json
+# Keep the docs site (landing page)
+!docs/
+!docs/**
 
 # Test artifacts
 test_output/
