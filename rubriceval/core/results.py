@@ -53,25 +53,60 @@ class TestResult:
         return [r for r in self.metric_results if not r.passed]
 
     def to_dict(self) -> dict:
-        return {
-            "name": self.test_case.name,
-            "input": self.test_case.input,
-            "actual_output": self.test_case.actual_output,
-            "expected_output": getattr(self.test_case, "expected_output", None),
+        from rubriceval.core.test_case import AgentTestCase
+        tc = self.test_case
+        is_agent = isinstance(tc, AgentTestCase)
+
+        d: dict = {
+            "name": tc.name,
+            "input": tc.input,
+            "actual_output": tc.actual_output,
+            "expected_output": getattr(tc, "expected_output", None),
             "passed": self.passed,
             "overall_score": round(self.overall_score, 4),
             "error": self.error,
             "evaluated_at": self.evaluated_at,
+            "is_agent": is_agent,
+            "latency_ms": tc.latency_ms,
+            "cost_usd": tc.cost_usd,
+            "token_usage": tc.token_usage,
             "metrics": [
                 {
                     "name": r.metric_name,
                     "score": round(r.score, 4),
                     "passed": r.passed,
                     "reason": r.reason,
+                    "metadata": r.metadata,
                 }
                 for r in self.metric_results
             ],
         }
+
+        if is_agent:
+            d["tool_calls"] = [
+                {
+                    "name": call.name,
+                    "arguments": call.arguments,
+                    "output": str(call.output) if call.output is not None else None,
+                    "error": call.error,
+                    "latency_ms": call.latency_ms,
+                }
+                for call in tc.tool_calls
+            ]
+            d["trace"] = [
+                {
+                    "type": step.type,
+                    "content": str(step.content) if step.content is not None else "",
+                    "latency_ms": step.latency_ms,
+                    "metadata": step.metadata,
+                }
+                for step in tc.trace
+            ]
+            d["expected_tools"] = tc.expected_tools
+            d["forbidden_tools"] = tc.forbidden_tools
+            d["max_steps"] = tc.max_steps
+
+        return d
 
     def __repr__(self) -> str:
         status = "✅ PASS" if self.passed else "❌ FAIL"
@@ -86,6 +121,27 @@ class EvalReport:
     started_at: str = field(default_factory=lambda: datetime.now().isoformat())
     finished_at: Optional[str] = None
     metadata: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def duration_seconds(self) -> Optional[float]:
+        if self.started_at and self.finished_at:
+            try:
+                from datetime import datetime as _dt
+                # Try with and without microseconds
+                def _parse(s):
+                    for f in ("%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%S"):
+                        try:
+                            return _dt.strptime(s[:26], f)
+                        except ValueError:
+                            pass
+                    return None
+                s = _parse(self.started_at)
+                e = _parse(self.finished_at)
+                if s and e:
+                    return (e - s).total_seconds()
+            except Exception:
+                pass
+        return None
 
     @property
     def total(self) -> int:
@@ -137,10 +193,12 @@ class EvalReport:
                 "failed": self.failed,
                 "pass_rate": round(self.pass_rate, 4),
                 "avg_score": round(self.avg_score, 4),
+                "duration_seconds": self.duration_seconds,
             },
             "metrics": self.metric_summary(),
             "started_at": self.started_at,
             "finished_at": self.finished_at,
+            "metadata": self.metadata,
             "results": [r.to_dict() for r in self.results],
         }
 
