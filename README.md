@@ -5,7 +5,7 @@
 [![PyPI version](https://badge.fury.io/py/rubric-eval.svg)](https://badge.fury.io/py/rubric-eval)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![GitHub Stars](https://img.shields.io/github/stars/kareemrashed/rubric-eval?style=social)](https://github.com/kareemrashed/rubric-eval)
+[![GitHub Stars](https://img.shields.io/github/stars/kareemrashed/rubric-eval?style=social)](https://github.com/kareem-rashed/rubric-eval)
 
 > **Not owned by any AI company. Open source forever.**
 >
@@ -342,12 +342,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
-MIT © [Kareem Rashed](https://github.com/kareemrashed)
+MIT © [Kareem Rashed](https://github.com/kareem-rashed)
 
 ---
-
-<div align="center">
-  <b>Built at AUC 🏛️ · Cairo, Egypt 🇪🇬</b>
-  <br/>
-  <sub>If Rubric saves you time, consider giving it a ⭐</sub>
-</div>
