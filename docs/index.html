@@ -613,7 +613,20 @@
 <!-- Nav -->
 <nav>
   <a href="#" class="nav-logo">
-    <span class="nav-logo-mark">R</span>
+    <svg width="24" height="24" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;border-radius:6px;">
+      <defs>
+        <linearGradient id="nav-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#fb923c"/>
+          <stop offset="100%" style="stop-color:#c2410c"/>
+        </linearGradient>
+      </defs>
+      <rect width="64" height="64" rx="14" ry="14" fill="url(#nav-bg)"/>
+      <rect x="13" y="11" width="9" height="42" fill="white" rx="1"/>
+      <rect x="13" y="11" width="27" height="9" fill="white" rx="1"/>
+      <rect x="31" y="11" width="9" height="24" fill="white" rx="1"/>
+      <rect x="13" y="26" width="27" height="9" fill="white" rx="1"/>
+      <polygon points="24,35 33,35 48,53 39,53" fill="white"/>
+    </svg>
     Rubric
   </a>
   <ul class="nav-links">
@@ -629,9 +642,25 @@
 
 <!-- Hero -->
 <div class="hero">
+  <div style="margin-bottom:24px;">
+    <svg width="72" height="72" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" style="border-radius:16px;box-shadow:0 0 0 1px rgba(249,115,22,0.3),0 8px 32px rgba(249,115,22,0.18);">
+      <defs>
+        <linearGradient id="hero-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#fb923c"/>
+          <stop offset="100%" style="stop-color:#c2410c"/>
+        </linearGradient>
+      </defs>
+      <rect width="64" height="64" rx="14" ry="14" fill="url(#hero-bg)"/>
+      <rect x="13" y="11" width="9" height="42" fill="white" rx="1"/>
+      <rect x="13" y="11" width="27" height="9" fill="white" rx="1"/>
+      <rect x="31" y="11" width="9" height="24" fill="white" rx="1"/>
+      <rect x="13" y="26" width="27" height="9" fill="white" rx="1"/>
+      <polygon points="24,35 33,35 48,53 39,53" fill="white"/>
+    </svg>
+  </div>
   <div class="hero-badge">
     <span class="hero-badge-dot"></span>
-    v0.1.0 &nbsp;&middot;&nbsp; Open Source &nbsp;&middot;&nbsp; MIT License
+    v0.1.1 &nbsp;&middot;&nbsp; Open Source &nbsp;&middot;&nbsp; MIT License
   </div>
   <h1><span class="hl">pytest</span> for&nbsp;AI.</h1>
   <p class="hero-sub">
