@@ -6,32 +6,34 @@
   <title>Rubric — The Independent LLM Evaluation Framework</title>
   <meta name="description" content="pytest for AI. Evaluate LLM outputs and AI agent behavior with a zero-dependency Python framework. Open source, neutral, and built for developers." />
   <meta property="og:title" content="Rubric — pytest for AI" />
-  <meta property="og:description" content="The independent LLM & AI agent evaluation framework. No cloud required. No lock-in. Just evals." />
+  <meta property="og:description" content="The independent LLM &amp; AI agent evaluation framework. No cloud required. No lock-in. Just evals." />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:       #08090c;
-      --surface:  #0e1016;
-      --surface2: #13161e;
-      --surface3: #191d28;
-      --border:   #1c2030;
-      --border2:  #252c3d;
-      --text:     #e2e6ef;
-      --muted:    #5a6478;
+      --bg:       #09090b;
+      --surface:  #111115;
+      --surface2: #17171c;
+      --surface3: #1d1d24;
+      --border:   #232329;
+      --border2:  #2c2c35;
+      --text:     #e8e8f0;
+      --text2:    #8888a0;
+      --muted:    #50505f;
       --accent:   #f97316;
       --accent-h: #ea6c0a;
-      --teal:     #14b8a6;
       --green:    #22c55e;
-      --blue:     #3b82f6;
-      --radius:   10px;
-      --radius-lg:16px;
+      --red:      #f43f5e;
+      --blue:     #38bdf8;
+      --slate:    #94a3b8;
+      --radius:   8px;
+      --radius-lg:12px;
     }
 
     html { scroll-behavior: smooth; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+      font-family: system-ui, -apple-system, 'Segoe UI', 'Inter', sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.6;
@@ -41,7 +43,7 @@
     /* ── Nav ── */
     nav {
       position: sticky; top: 0; z-index: 100;
-      background: rgba(8,9,12,0.9);
+      background: rgba(9,9,11,0.92);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
@@ -86,7 +88,7 @@
       content: '';
       position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
       width: 700px; height: 480px;
-      background: radial-gradient(ellipse at center, rgba(249,115,22,0.08) 0%, transparent 65%);
+      background: radial-gradient(ellipse at center, rgba(249,115,22,0.07) 0%, transparent 65%);
       pointer-events: none;
     }
     .hero-badge {
@@ -95,7 +97,7 @@
       color: #fdba74; font-size: 0.77rem; font-weight: 600;
       padding: 5px 14px; border-radius: 20px; margin-bottom: 28px;
     }
-    .hero-badge-dot { width: 6px; height: 6px; background: var(--teal); border-radius: 50%; flex-shrink: 0; }
+    .hero-badge-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; flex-shrink: 0; }
     h1 {
       font-size: clamp(2.6rem, 7vw, 5.2rem); font-weight: 800;
       letter-spacing: -2.5px; line-height: 1.05;
@@ -134,7 +136,7 @@
     }
     .install-box .prompt { color: var(--muted); user-select: none; }
     .install-box .cmd   { color: var(--text); }
-    .install-box .pkg   { color: var(--teal); }
+    .install-box .pkg   { color: var(--blue); }
     .install-copy {
       background: none; border: none; color: var(--muted);
       cursor: pointer; padding: 0; font-size: 0.8rem;
@@ -157,7 +159,7 @@
 
     .section-label {
       font-size: 0.69rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 2px; color: var(--teal); margin-bottom: 10px;
+      letter-spacing: 2px; color: var(--accent); margin-bottom: 10px;
     }
     h2 {
       font-size: clamp(1.7rem, 4vw, 2.5rem); font-weight: 800;
@@ -189,7 +191,7 @@
     .feature-card code {
       font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.79rem;
       background: var(--surface3); padding: 1px 6px; border-radius: 4px;
-      color: var(--teal);
+      color: var(--blue);
     }
 
     /* ── Unique section ── */
@@ -288,6 +290,279 @@
     .metric-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
     .metric-item-desc { font-size: 0.77rem; color: var(--muted); line-height: 1.55; padding-left: 12px; }
 
+    /* ── Output Preview Section ── */
+    .preview-section { position: relative; }
+    .preview-window {
+      border: 1px solid var(--border2);
+      border-radius: 14px;
+      overflow: hidden;
+      background: var(--surface);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+      max-width: 900px;
+    }
+    .browser-chrome {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .chrome-dots { display: flex; gap: 6px; }
+    .chrome-dot {
+      width: 11px; height: 11px; border-radius: 50%;
+    }
+    .chrome-dot-r { background: #ff5f57; }
+    .chrome-dot-y { background: #febc2e; }
+    .chrome-dot-g { background: #28c840; }
+    .chrome-url {
+      flex: 1; max-width: 340px; margin: 0 auto;
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 12px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-align: center;
+    }
+    .preview-body {
+      padding: 20px;
+      max-height: 540px;
+      overflow: hidden;
+      position: relative;
+    }
+    .preview-body::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 100px;
+      background: linear-gradient(to bottom, transparent, var(--surface));
+      pointer-events: none;
+    }
+    /* Preview: report header */
+    .pv-header {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .pv-logo { color: var(--accent); font-weight: 800; font-size: 0.95rem; }
+    .pv-run  { color: var(--text2); font-size: 0.8rem; font-weight: 500; }
+    .pv-dur  {
+      font-size: 0.69rem; font-weight: 600;
+      padding: 2px 9px; border-radius: 20px;
+      background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.2);
+      color: var(--accent);
+    }
+    /* Preview: stat chips */
+    .pv-stats {
+      display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;
+    }
+    .pv-stat {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 16px;
+      position: relative;
+      overflow: hidden;
+      min-width: 110px;
+    }
+    .pv-stat::after {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 2px;
+    }
+    .pv-stat.orange::after { background: var(--accent); }
+    .pv-stat.slate-top::after  { background: var(--slate); }
+    .pv-stat.green::after  { background: var(--green); }
+    .pv-stat.red::after    { background: var(--red); }
+    .pv-stat.gray::after   { background: var(--muted); }
+    .pv-stat-val {
+      font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px;
+      line-height: 1; margin-bottom: 3px;
+      font-variant-numeric: tabular-nums;
+    }
+    .pv-stat.orange .pv-stat-val { color: var(--accent); }
+    .pv-stat.slate-top .pv-stat-val  { color: var(--slate); }
+    .pv-stat.green .pv-stat-val  { color: var(--green); }
+    .pv-stat.red .pv-stat-val    { color: var(--red); }
+    .pv-stat.gray .pv-stat-val   { color: var(--text2); }
+    .pv-stat-lbl { font-size: 0.61rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.3px; color: var(--muted); }
+    /* Preview: metric bars */
+    .pv-bars-card {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+    }
+    .pv-bars-title {
+      font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.3px; color: var(--muted); margin-bottom: 12px;
+    }
+    .pv-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .pv-bar-row:last-child { margin-bottom: 0; }
+    .pv-bar-name { width: 130px; flex-shrink: 0; font-size: 0.74rem; color: var(--text2); }
+    .pv-bar-track { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .pv-bar-fill  { height: 100%; border-radius: 3px; }
+    .pv-bar-pct   { width: 40px; text-align: right; font-size: 0.73rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    /* Preview: results table */
+    .pv-table {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .pv-table-header {
+      display: grid;
+      grid-template-columns: 80px 1fr 130px 1fr;
+      padding: 8px 14px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.61rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--muted);
+      gap: 12px;
+    }
+    .pv-row {
+      display: grid;
+      grid-template-columns: 80px 1fr 130px 1fr;
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
+      align-items: start;
+      gap: 12px;
+      font-size: 0.8rem;
+    }
+    .pv-row:last-child { border-bottom: none; }
+    .pv-row.expanded { background: var(--surface2); }
+    .pv-badge {
+      display: inline-flex; align-items: center;
+      padding: 2px 7px; border-radius: 4px;
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.6px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+    .pv-pass { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+    .pv-fail { background: rgba(244,63,94,0.1);  color: var(--red);   border: 1px solid rgba(244,63,94,0.2); }
+    .pv-agent { background: rgba(56,189,248,0.08); color: var(--blue); border: 1px solid rgba(56,189,248,0.18); font-size: 0.6rem; }
+    .pv-name { font-weight: 500; color: var(--text); font-size: 0.8rem; }
+    .pv-sub  { font-size: 0.69rem; color: var(--muted); margin-top: 2px; }
+    .pv-score-cell { display: flex; align-items: center; gap: 7px; }
+    .pv-score-track { flex: 1; height: 5px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .pv-score-fill  { height: 100%; border-radius: 2px; }
+    .pv-score-num { font-weight: 700; font-size: 0.79rem; font-variant-numeric: tabular-nums; }
+    .pv-pills { display: flex; flex-wrap: wrap; gap: 3px; }
+    .pv-pill {
+      font-size: 0.62rem; font-weight: 600;
+      padding: 1px 6px; border-radius: 3px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+    .pv-pill-pass { background: rgba(34,197,94,0.08); color: #16a34a; }
+    .pv-pill-fail { background: rgba(244,63,94,0.08); color: #e11d48; }
+    /* Preview: trace (inline in expanded row) */
+    .pv-detail {
+      grid-column: 1 / -1;
+      padding: 14px 0 2px;
+    }
+    .pv-agent-strip {
+      display: flex; gap: 7px; flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .pv-chip {
+      display: flex; align-items: center; gap: 5px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 6px; padding: 4px 10px;
+      font-size: 0.72rem;
+    }
+    .pv-chip-lbl { color: var(--muted); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+    .pv-chip-val { font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+    .pv-tabs {
+      display: flex; gap: 1px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+    .pv-tab {
+      padding: 6px 12px;
+      font-size: 0.73rem; font-weight: 600;
+      color: var(--muted);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    .pv-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    /* Preview trace tree */
+    .pv-trace { position: relative; padding-left: 24px; }
+    .pv-trace::before {
+      content: '';
+      position: absolute;
+      left: 10px; top: 18px; bottom: 18px;
+      width: 2px;
+      background: linear-gradient(180deg, var(--accent) 0%, var(--border2) 100%);
+      border-radius: 1px;
+    }
+    .pv-trace-step { position: relative; margin-bottom: 7px; }
+    .pv-trace-step:last-child { margin-bottom: 0; }
+    .pv-trace-dot {
+      position: absolute;
+      left: -17px; top: 13px;
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      border: 2px solid var(--surface2);
+      z-index: 1;
+    }
+    .pv-trace-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      overflow: hidden;
+    }
+    .pv-trace-card.think  { border-left: 3px solid var(--slate); }
+    .pv-trace-card.call   { border-left: 3px solid var(--accent); }
+    .pv-trace-card.result { border-left: 3px solid var(--green); }
+    .pv-trace-header {
+      display: flex; align-items: center; gap: 7px;
+      padding: 7px 11px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+    }
+    .pv-trace-num { font-size: 0.63rem; color: var(--muted); font-family: 'SF Mono','Fira Code',monospace; }
+    .pv-trace-badge {
+      font-size: 0.61rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.9px; padding: 2px 6px; border-radius: 3px;
+      font-family: 'SF Mono', 'Fira Code', monospace; flex-shrink: 0;
+    }
+    .pv-trace-badge.think  { background: rgba(148,163,184,0.12); color: var(--slate); }
+    .pv-trace-badge.call   { background: rgba(249,115,22,0.12);  color: var(--accent); }
+    .pv-trace-badge.result { background: rgba(34,197,94,0.1);    color: var(--green); }
+    .pv-trace-preview {
+      font-size: 0.74rem; color: var(--text2);
+      flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      margin-left: 4px;
+    }
+    .pv-trace-lat {
+      font-size: 0.64rem; font-weight: 600; color: var(--muted);
+      font-variant-numeric: tabular-nums; flex-shrink: 0; margin-left: auto;
+    }
+    .pv-trace-body {
+      padding: 8px 11px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.73rem; color: #c8c8e0;
+      line-height: 1.5;
+    }
+    /* preview link */
+    .preview-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.86rem;
+    }
+    .preview-link a {
+      color: var(--accent); text-decoration: none; font-weight: 600;
+      transition: color 0.15s;
+    }
+    .preview-link a:hover { color: var(--accent-h); }
+
     /* ── CTA ── */
     .cta-banner {
       background: var(--surface); border: 1px solid var(--border);
@@ -298,7 +573,7 @@
       content: '';
       position: absolute; bottom: -80px; left: 50%; transform: translateX(-50%);
       width: 600px; height: 300px;
-      background: radial-gradient(ellipse at center, rgba(249,115,22,0.06) 0%, transparent 65%);
+      background: radial-gradient(ellipse at center, rgba(249,115,22,0.05) 0%, transparent 65%);
       pointer-events: none;
     }
     .cta-banner h2 { margin-bottom: 12px; position: relative; }
@@ -336,6 +611,10 @@
       .cta-banner { padding: 36px 20px; }
       footer { padding: 28px 20px; flex-direction: column; text-align: center; }
       .nav-links { display: none; }
+      .pv-table-header { grid-template-columns: 70px 1fr; }
+      .pv-row         { grid-template-columns: 70px 1fr; }
+      .pv-table-header > *:nth-child(n+3) { display: none; }
+      .pv-row         > *:nth-child(n+3) { display: none; }
     }
   </style>
 </head>
@@ -351,9 +630,10 @@
     <li><a href="#features">Features</a></li>
     <li><a href="#unique">What's Unique</a></li>
     <li><a href="#quickstart">Quick Start</a></li>
+    <li><a href="#output">Output</a></li>
     <li><a href="#metrics">All Metrics</a></li>
     <li><a href="https://github.com/Kareem-Rashed/rubric-eval" target="_blank">GitHub</a></li>
-    <li><a href="https://github.com/Kareem-Rashed/rubric-eval#readme" target="_blank" class="nav-cta">Docs →</a></li>
+    <li><a href="https://github.com/Kareem-Rashed/rubric-eval#readme" target="_blank" class="nav-cta">Docs &#8594;</a></li>
   </ul>
 </nav>
 
@@ -361,7 +641,7 @@
 <div class="hero">
   <div class="hero-badge">
     <span class="hero-badge-dot"></span>
-    v0.1.0 &nbsp;·&nbsp; Open Source &nbsp;·&nbsp; MIT License
+    v0.1.0 &nbsp;&middot;&nbsp; Open Source &nbsp;&middot;&nbsp; MIT License
   </div>
   <h1><span class="hl">pytest</span> for&nbsp;AI.</h1>
   <p class="hero-sub">
@@ -369,23 +649,23 @@
     Neutral, extensible, and not owned by any AI company.
   </p>
   <div class="hero-actions">
-    <a href="#quickstart" class="btn-primary">Get Started →</a>
+    <a href="#quickstart" class="btn-primary">Get Started &#8594;</a>
     <a href="https://github.com/Kareem-Rashed/rubric-eval" target="_blank" class="btn-secondary">View on GitHub</a>
   </div>
   <div class="install-box">
     <span class="prompt">$</span>
     <span class="cmd">pip install </span><span class="pkg">rubric-eval</span>
-    <button class="install-copy" onclick="copyInstall(this)" title="Copy">⎘ Copy</button>
+    <button class="install-copy" onclick="copyInstall(this)" title="Copy">&#8680; Copy</button>
   </div>
 </div>
 
 <!-- Strip -->
 <div class="strip">
-  <div class="strip-item">— <strong>Zero</strong>&nbsp;required dependencies</div>
-  <div class="strip-item">— <strong>Native</strong>&nbsp;pytest integration</div>
-  <div class="strip-item">— <strong>First-class</strong>&nbsp;agent trace eval</div>
-  <div class="strip-item">— Works with <strong>any</strong>&nbsp;LLM</div>
-  <div class="strip-item">— <strong>Local</strong>&nbsp;HTML reports</div>
+  <div class="strip-item">&#8212; <strong>Zero</strong>&nbsp;required dependencies</div>
+  <div class="strip-item">&#8212; <strong>Native</strong>&nbsp;pytest integration</div>
+  <div class="strip-item">&#8212; <strong>First-class</strong>&nbsp;agent trace eval</div>
+  <div class="strip-item">&#8212; Works with <strong>any</strong>&nbsp;LLM</div>
+  <div class="strip-item">&#8212; <strong>Local</strong>&nbsp;HTML reports</div>
 </div>
 
 <!-- Features -->
@@ -394,44 +674,44 @@
   <h2>Built for developers.<br>Not for any AI company.</h2>
   <p class="section-sub">
     After Promptfoo joined OpenAI, the community needed a truly independent evaluation framework.
-    Rubric is that answer — open source forever, no cloud required, no lock-in.
+    Rubric is that answer &mdash; open source forever, no cloud required, no lock-in.
   </p>
   <div class="features-grid">
 
     <div class="feature-card">
       <span class="feature-num">01</span>
       <h3>First-Class Agent Evaluation</h3>
-      <p>Most eval frameworks only check the final output. Rubric evaluates the entire agent run — which tools were called, in what order, what the reasoning trace looks like, how long it took, and what it cost. You can require specific tools, forbid others, and penalize loops or redundant calls.</p>
+      <p>Most eval frameworks only check the final output. Rubric evaluates the entire agent run &mdash; which tools were called, in what order, what the reasoning trace looks like, how long it took, and what it cost. You can require specific tools, forbid others, and penalize loops or redundant calls.</p>
     </div>
 
     <div class="feature-card">
       <span class="feature-num">02</span>
       <h3>Works With Any LLM</h3>
-      <p>Rubric is model-agnostic. Pass any Python callable as your judge function: OpenAI, Anthropic, Ollama, a local model, or a mock. No API keys required unless you use <code>LLMJudge</code> or <code>GEval</code> — Rubric auto-detects from your environment variables when you do.</p>
+      <p>Rubric is model-agnostic. Pass any Python callable as your judge function: OpenAI, Anthropic, Ollama, a local model, or a mock. No API keys required unless you use <code>LLMJudge</code> or <code>GEval</code> &mdash; Rubric auto-detects from your environment variables when you do.</p>
     </div>
 
     <div class="feature-card">
       <span class="feature-num">03</span>
       <h3>Zero Required Dependencies</h3>
-      <p>The entire core — string matching, agent metrics, results, CLI, and HTML reports — ships with nothing mandatory. Install extras only when you need them: <code>pip install rubric-eval[semantic]</code> for embeddings, <code>[openai]</code> or <code>[anthropic]</code> for LLM judging.</p>
+      <p>The entire core &mdash; string matching, agent metrics, results, CLI, and HTML reports &mdash; ships with nothing mandatory. Install extras only when you need them: <code>pip install rubric-eval[semantic]</code> for embeddings, <code>[openai]</code> or <code>[anthropic]</code> for LLM judging.</p>
     </div>
 
     <div class="feature-card">
       <span class="feature-num">04</span>
       <h3>Native pytest Integration</h3>
-      <p>Drop the <code>rubric_eval</code> fixture into any test file. Your LLM evals run inside the same <code>pytest</code> session as your unit tests — same CI pipeline, same runner, same output. No separate eval server or dashboard login needed.</p>
+      <p>Drop the <code>rubric_eval</code> fixture into any test file. Your LLM evals run inside the same <code>pytest</code> session as your unit tests &mdash; same CI pipeline, same runner, same output. No separate eval server or dashboard login needed.</p>
     </div>
 
     <div class="feature-card">
       <span class="feature-num">05</span>
       <h3>Interactive HTML Reports</h3>
-      <p>Every eval run can produce a self-contained HTML report — no server, no build step, just a file. Filter results by pass/fail, drill into per-metric score breakdowns with explanations, and see exact inputs and outputs side-by-side. Share it as a single file.</p>
+      <p>Every eval run can produce a self-contained HTML report &mdash; no server, no build step, just a file. Filter results by pass/fail, drill into per-metric score breakdowns with explanations, and see exact inputs and outputs side-by-side. Share it as a single file.</p>
     </div>
 
     <div class="feature-card">
       <span class="feature-num">06</span>
       <h3>Truly Independent</h3>
-      <p>MIT licensed. Not a product of OpenAI, Anthropic, Google, or any model provider. Rubric will never have a financial incentive to favor one model over another. Evaluate any model with the same unbiased framework — that's the whole point.</p>
+      <p>MIT licensed. Not a product of OpenAI, Anthropic, Google, or any model provider. Rubric will never have a financial incentive to favor one model over another. Evaluate any model with the same unbiased framework &mdash; that's the whole point.</p>
     </div>
 
   </div>
@@ -442,7 +722,7 @@
   <div class="section-label">What Makes Rubric Different</div>
   <h2>The metrics no one else ships.</h2>
   <p class="section-sub">
-    These are the metrics that matter when you're deploying a real agent — not just a chatbot.
+    These are the metrics that matter when you're deploying a real agent &mdash; not just a chatbot.
     Rubric ships them out of the box.
   </p>
   <div class="unique-grid">
@@ -456,11 +736,11 @@
       <div class="unique-card-checks">
         <div class="check-item">
           <span class="check-dot" style="background:var(--green)"></span>
-          <span><strong>ToolCallAccuracy</strong> — assert that every required tool was called, no forbidden tools were used, and optionally that they were called in the correct order. Score degrades proportionally to missing or unexpected tools.</span>
+          <span><strong>ToolCallAccuracy</strong> &mdash; assert that every required tool was called, no forbidden tools were used, and optionally that they were called in the correct order. Score degrades proportionally to missing or unexpected tools.</span>
         </div>
         <div class="check-item">
           <span class="check-dot" style="background:var(--green)"></span>
-          <span><strong>ToolCallEfficiency</strong> — detect redundant calls (same tool, same args, called twice), failed tool invocations, and individual tools that exceeded a latency budget. Produces a composite efficiency score.</span>
+          <span><strong>ToolCallEfficiency</strong> &mdash; detect redundant calls (same tool, same args, called twice), failed tool invocations, and individual tools that exceeded a latency budget. Produces a composite efficiency score.</span>
         </div>
       </div>
     </div>
@@ -474,15 +754,15 @@
       <div class="unique-card-checks">
         <div class="check-item">
           <span class="check-dot" style="background:var(--accent)"></span>
-          <span><strong>PII detection</strong> — flags Social Security numbers, credit card patterns, email addresses, and phone numbers leaking through responses.</span>
+          <span><strong>PII detection</strong> &mdash; flags Social Security numbers, credit card patterns, email addresses, and phone numbers leaking through responses.</span>
         </div>
         <div class="check-item">
           <span class="check-dot" style="background:var(--accent)"></span>
-          <span><strong>Dangerous SQL</strong> — catches DROP, DELETE, TRUNCATE, and other destructive patterns in tool arguments before they execute.</span>
+          <span><strong>Dangerous SQL</strong> &mdash; catches DROP, DELETE, TRUNCATE, and other destructive patterns in tool arguments before they execute.</span>
         </div>
         <div class="check-item">
           <span class="check-dot" style="background:var(--accent)"></span>
-          <span><strong>Forbidden tool enforcement</strong> — fails the test if any tool on your deny-list was invoked, regardless of what the agent was instructed.</span>
+          <span><strong>Forbidden tool enforcement</strong> &mdash; fails the test if any tool on your deny-list was invoked, regardless of what the agent was instructed.</span>
         </div>
       </div>
     </div>
@@ -496,29 +776,29 @@
       <div class="unique-card-checks">
         <div class="check-item">
           <span class="check-dot" style="background:var(--blue)"></span>
-          <span><strong>TraceQuality</strong> — analyzes the full reasoning trace for circular loops, repeated steps, and dead-end paths. Penalizes agents that cycle through the same actions without making progress.</span>
+          <span><strong>TraceQuality</strong> &mdash; analyzes the full reasoning trace for circular loops, repeated steps, and dead-end paths. Penalizes agents that cycle through the same actions without making progress.</span>
         </div>
         <div class="check-item">
           <span class="check-dot" style="background:var(--blue)"></span>
-          <span><strong>ReasoningQuality</strong> — measures the ratio of reasoning steps to tool calls, and checks whether the agent updated its plan based on observations — a sign of genuine multi-step thinking.</span>
+          <span><strong>ReasoningQuality</strong> &mdash; measures the ratio of reasoning steps to tool calls, and checks whether the agent updated its plan based on observations &mdash; a sign of genuine multi-step thinking.</span>
         </div>
       </div>
     </div>
 
     <div class="unique-card">
       <div class="unique-card-top">
-        <div class="unique-card-tag" style="color: var(--teal);">RAG</div>
+        <div class="unique-card-tag" style="color: var(--slate);">RAG</div>
         <div class="unique-card-title">Context Utilization</div>
         <div class="unique-card-sub">For RAG pipelines: verify the agent actually used what it retrieved, rather than ignoring context and hallucinating.</div>
       </div>
       <div class="unique-card-checks">
         <div class="check-item">
-          <span class="check-dot" style="background:var(--teal)"></span>
-          <span><strong>ContextUtilization</strong> — checks that retrieved context is grounded in the final answer. Catches the common failure mode where an agent fetches documents but generates a response that doesn't reference them at all.</span>
+          <span class="check-dot" style="background:var(--slate)"></span>
+          <span><strong>ContextUtilization</strong> &mdash; checks that retrieved context is grounded in the final answer. Catches the common failure mode where an agent fetches documents but generates a response that doesn't reference them at all.</span>
         </div>
         <div class="check-item">
-          <span class="check-dot" style="background:var(--teal)"></span>
-          <span>Works on any RAG architecture — pass the retrieved context as trace steps in your <code>AgentTestCase</code> and Rubric handles the rest.</span>
+          <span class="check-dot" style="background:var(--slate)"></span>
+          <span>Works on any RAG architecture &mdash; pass the retrieved context as trace steps in your <code>AgentTestCase</code> and Rubric handles the rest.</span>
         </div>
       </div>
     </div>
@@ -567,7 +847,7 @@ results = rubric.<span class="fn">evaluate</span>(
           <div class="code-dot" style="background:#ff5f57"></div>
           <div class="code-dot" style="background:#febc2e"></div>
           <div class="code-dot" style="background:#28c840"></div>
-          <span class="code-block-title">test_llm.py — pytest</span>
+          <span class="code-block-title">test_llm.py &mdash; pytest</span>
         </div>
         <pre><span class="kw">import</span> rubriceval <span class="kw">as</span> rubric
 
@@ -593,7 +873,7 @@ results = rubric.<span class="fn">evaluate</span>(
           <div class="code-dot" style="background:#ff5f57"></div>
           <div class="code-dot" style="background:#febc2e"></div>
           <div class="code-dot" style="background:#28c840"></div>
-          <span class="code-block-title">agent_eval.py — full agent eval</span>
+          <span class="code-block-title">agent_eval.py &mdash; full agent eval</span>
         </div>
         <pre><span class="kw">import</span> rubriceval <span class="kw">as</span> rubric
 
@@ -634,12 +914,243 @@ results.<span class="fn">print_summary</span>()</pre>
   </div>
 </div>
 
+<!-- Output Preview -->
+<div class="wrap" id="output" style="padding-top: 0;">
+  <div class="section-label">Output</div>
+  <h2>Every run produces a report<br>your team can actually use.</h2>
+  <p class="section-sub">
+    A single self-contained HTML file. No server. No login. Filter by pass/fail, drill into agent traces, inspect tool calls.
+  </p>
+
+  <div class="preview-window">
+    <!-- Browser chrome -->
+    <div class="browser-chrome">
+      <div class="chrome-dots">
+        <div class="chrome-dot chrome-dot-r"></div>
+        <div class="chrome-dot chrome-dot-y"></div>
+        <div class="chrome-dot chrome-dot-g"></div>
+      </div>
+      <div class="chrome-url">agent_report.html</div>
+    </div>
+
+    <!-- Report preview -->
+    <div class="preview-body">
+
+      <!-- Mini header -->
+      <div class="pv-header">
+        <span class="pv-logo">&#9672; Rubric</span>
+        <span class="pv-run">flight-booking-eval</span>
+        <span class="pv-dur">4.2s</span>
+      </div>
+
+      <!-- Stat chips -->
+      <div class="pv-stats">
+        <div class="pv-stat orange">
+          <div class="pv-stat-val">67%</div>
+          <div class="pv-stat-lbl">Pass Rate</div>
+        </div>
+        <div class="pv-stat slate-top">
+          <div class="pv-stat-val">0.912</div>
+          <div class="pv-stat-lbl">Avg Score</div>
+        </div>
+        <div class="pv-stat green">
+          <div class="pv-stat-val">4</div>
+          <div class="pv-stat-lbl">Passed</div>
+        </div>
+        <div class="pv-stat red">
+          <div class="pv-stat-val">2</div>
+          <div class="pv-stat-lbl">Failed</div>
+        </div>
+        <div class="pv-stat gray">
+          <div class="pv-stat-val">6</div>
+          <div class="pv-stat-lbl">Total Tests</div>
+        </div>
+      </div>
+
+      <!-- Metric bars -->
+      <div class="pv-bars-card">
+        <div class="pv-bars-title">Pass Rate per Metric</div>
+        <div class="pv-bar-row">
+          <div class="pv-bar-name">ToolCallAccuracy</div>
+          <div class="pv-bar-track"><div class="pv-bar-fill" style="width:83%;background:#22c55e"></div></div>
+          <div class="pv-bar-pct" style="color:#22c55e">83%</div>
+        </div>
+        <div class="pv-bar-row">
+          <div class="pv-bar-name">TraceQuality</div>
+          <div class="pv-bar-track"><div class="pv-bar-fill" style="width:67%;background:#f97316"></div></div>
+          <div class="pv-bar-pct" style="color:#f97316">67%</div>
+        </div>
+        <div class="pv-bar-row">
+          <div class="pv-bar-name">LatencyMetric</div>
+          <div class="pv-bar-track"><div class="pv-bar-fill" style="width:100%;background:#22c55e"></div></div>
+          <div class="pv-bar-pct" style="color:#22c55e">100%</div>
+        </div>
+        <div class="pv-bar-row">
+          <div class="pv-bar-name">SafetyCompliance</div>
+          <div class="pv-bar-track"><div class="pv-bar-fill" style="width:50%;background:#f43f5e"></div></div>
+          <div class="pv-bar-pct" style="color:#f43f5e">50%</div>
+        </div>
+      </div>
+
+      <!-- Results table -->
+      <div class="pv-table">
+        <div class="pv-table-header">
+          <div>Status</div>
+          <div>Test Case</div>
+          <div>Score</div>
+          <div>Metrics</div>
+        </div>
+
+        <!-- PASS row — Flight booking — EXPANDED with trace -->
+        <div class="pv-row expanded">
+          <div>
+            <span class="pv-badge pv-pass">PASS</span>
+            <br><span class="pv-badge pv-agent" style="margin-top:4px;display:inline-flex">AGENT</span>
+          </div>
+          <div>
+            <div class="pv-name">Flight booking CAI&#8594;CDG</div>
+            <div class="pv-sub">Book a round-trip economy flight from Cairo to Paris</div>
+          </div>
+          <div>
+            <div class="pv-score-cell">
+              <div class="pv-score-track"><div class="pv-score-fill" style="width:96%;background:#22c55e"></div></div>
+              <span class="pv-score-num" style="color:#22c55e">0.960</span>
+            </div>
+          </div>
+          <div>
+            <div class="pv-pills">
+              <span class="pv-pill pv-pill-pass">ToolCallAccuracy</span>
+              <span class="pv-pill pv-pill-pass">TraceQuality</span>
+              <span class="pv-pill pv-pill-pass">LatencyMetric</span>
+            </div>
+          </div>
+
+          <!-- Expanded detail: agent meta + trace -->
+          <div class="pv-detail">
+            <div class="pv-agent-strip">
+              <div class="pv-chip">
+                <span class="pv-chip-lbl">Latency</span>
+                <span class="pv-chip-val">1,240ms</span>
+              </div>
+              <div class="pv-chip">
+                <span class="pv-chip-lbl">Cost</span>
+                <span class="pv-chip-val">$0.00412</span>
+              </div>
+              <div class="pv-chip">
+                <span class="pv-chip-lbl">Steps</span>
+                <span class="pv-chip-val">4</span>
+              </div>
+              <div class="pv-chip">
+                <span class="pv-chip-lbl">Tool Calls</span>
+                <span class="pv-chip-val">2</span>
+              </div>
+            </div>
+            <div class="pv-tabs">
+              <div class="pv-tab">I/O</div>
+              <div class="pv-tab">Metrics</div>
+              <div class="pv-tab active">Trace (4)</div>
+              <div class="pv-tab">Tool Calls (2)</div>
+            </div>
+            <!-- Trace tree -->
+            <div class="pv-trace">
+
+              <div class="pv-trace-step">
+                <div class="pv-trace-dot" style="background:#94a3b8;border-color:#17171c"></div>
+                <div class="pv-trace-card think">
+                  <div class="pv-trace-header">
+                    <span class="pv-trace-num">#1</span>
+                    <span class="pv-trace-badge think">THINK</span>
+                    <span class="pv-trace-preview">User wants a round-trip economy flight from Cairo (CAI) to Paris (CDG). Searching available options first.</span>
+                    <span class="pv-trace-lat">58ms</span>
+                  </div>
+                  <div class="pv-trace-body">User wants a round-trip economy flight from Cairo (CAI) to Paris (CDG). Searching available options first.</div>
+                </div>
+              </div>
+
+              <div class="pv-trace-step">
+                <div class="pv-trace-dot" style="background:#f97316;border-color:#17171c"></div>
+                <div class="pv-trace-card call">
+                  <div class="pv-trace-header">
+                    <span class="pv-trace-num">#2</span>
+                    <span class="pv-trace-badge call">CALL</span>
+                    <span class="pv-trace-preview">search_flights(origin=CAI, destination=CDG, date=2024-04-04, class=economy)</span>
+                    <span class="pv-trace-lat">312ms</span>
+                  </div>
+                  <div class="pv-trace-body">search_flights(origin=CAI, destination=CDG, date=2024-04-04, class=economy)</div>
+                </div>
+              </div>
+
+              <div class="pv-trace-step">
+                <div class="pv-trace-dot" style="background:#22c55e;border-color:#17171c"></div>
+                <div class="pv-trace-card result">
+                  <div class="pv-trace-header">
+                    <span class="pv-trace-num">#3</span>
+                    <span class="pv-trace-badge result">RESULT</span>
+                    <span class="pv-trace-preview">Found 2 options: AF123 at $487 non-stop (5h20m) and LH456 at $521 with 1 stop.</span>
+                    <span class="pv-trace-lat">22ms</span>
+                  </div>
+                  <div class="pv-trace-body">Found 2 options: AF123 at $487 non-stop (5h20m) and LH456 at $521 with 1 stop.</div>
+                </div>
+              </div>
+
+              <div class="pv-trace-step">
+                <div class="pv-trace-dot" style="background:#f97316;border-color:#17171c"></div>
+                <div class="pv-trace-card call">
+                  <div class="pv-trace-header">
+                    <span class="pv-trace-num">#4</span>
+                    <span class="pv-trace-badge call">CALL</span>
+                    <span class="pv-trace-preview">check_availability(flight_id=AF123, passengers=1)</span>
+                    <span class="pv-trace-lat">188ms</span>
+                  </div>
+                  <div class="pv-trace-body">check_availability(flight_id=AF123, passengers=1)</div>
+                </div>
+              </div>
+
+            </div><!-- /pv-trace -->
+          </div><!-- /pv-detail -->
+        </div><!-- /pass row -->
+
+        <!-- FAIL row — Weather check -->
+        <div class="pv-row">
+          <div>
+            <span class="pv-badge pv-fail">FAIL</span>
+            <br><span class="pv-badge pv-agent" style="margin-top:4px;display:inline-flex">AGENT</span>
+          </div>
+          <div>
+            <div class="pv-name">Weather check &amp; advisory</div>
+            <div class="pv-sub">Get weather forecast and issue travel advisory for Paris next week</div>
+          </div>
+          <div>
+            <div class="pv-score-cell">
+              <div class="pv-score-track"><div class="pv-score-fill" style="width:42%;background:#f43f5e"></div></div>
+              <span class="pv-score-num" style="color:#f43f5e">0.420</span>
+            </div>
+          </div>
+          <div>
+            <div class="pv-pills">
+              <span class="pv-pill pv-pill-fail">ToolCallAccuracy</span>
+              <span class="pv-pill pv-pill-fail">SafetyCompliance</span>
+              <span class="pv-pill pv-pill-pass">LatencyMetric</span>
+            </div>
+          </div>
+        </div><!-- /fail row -->
+
+      </div><!-- /pv-table -->
+
+    </div><!-- /preview-body -->
+  </div><!-- /preview-window -->
+
+  <div class="preview-link">
+    <a href="showcase.html">Open full sample report &#8594;</a>
+  </div>
+</div>
+
 <!-- All Metrics -->
 <div class="wrap" id="metrics" style="padding-top: 0;">
   <div class="section-label">Metrics Library</div>
   <h2>15 metrics across 4 categories.</h2>
   <p class="section-sub">
-    Mix and match. Extend with your own by subclassing <code>BaseMetric</code>.
+    Mix and match. Extend with your own by subclassing <code style="font-family:'SF Mono','Fira Code',monospace;font-size:0.82rem;background:var(--surface3);padding:1px 6px;border-radius:4px;color:var(--blue)">BaseMetric</code>.
   </p>
   <div class="metrics-grid">
 
@@ -658,7 +1169,7 @@ results.<span class="fn">print_summary</span>()</pre>
       </div>
       <div class="metric-item">
         <div class="metric-item-name"><span class="metric-dot" style="background:#22c55e"></span>NotContains</div>
-        <div class="metric-item-desc">Passes only when the output does NOT contain the given string. Essential for safety guardrails — catch refusal phrases, hallucinated names, or forbidden content.</div>
+        <div class="metric-item-desc">Passes only when the output does NOT contain the given string. Essential for safety guardrails &mdash; catch refusal phrases, hallucinated names, or forbidden content.</div>
       </div>
       <div class="metric-item">
         <div class="metric-item-name"><span class="metric-dot" style="background:#22c55e"></span>RegexMatch</div>
@@ -669,26 +1180,26 @@ results.<span class="fn">print_summary</span>()</pre>
     <div class="metric-group">
       <div class="metric-group-header">
         Semantic
-        <span class="mg-badge" style="background:rgba(59,130,246,0.1); color:#60a5fa;">[semantic]</span>
+        <span class="mg-badge" style="background:rgba(56,189,248,0.1); color:#38bdf8;">[semantic]</span>
       </div>
       <div class="metric-item">
-        <div class="metric-item-name"><span class="metric-dot" style="background:#60a5fa"></span>SemanticSimilarity</div>
+        <div class="metric-item-name"><span class="metric-dot" style="background:#38bdf8"></span>SemanticSimilarity</div>
         <div class="metric-item-desc">Embeds both the output and expected answer using sentence-transformers and computes cosine similarity. Catches correct answers phrased differently. Configurable threshold (default 0.8).</div>
       </div>
       <div class="metric-item">
-        <div class="metric-item-name"><span class="metric-dot" style="background:#60a5fa"></span>RougeScore</div>
+        <div class="metric-item-name"><span class="metric-dot" style="background:#38bdf8"></span>RougeScore</div>
         <div class="metric-item-desc">Measures n-gram overlap between output and a reference text. The standard metric for summarization quality. Supports ROUGE-1, ROUGE-2, and ROUGE-L.</div>
       </div>
       <div class="metric-group-header" style="border-top: 1px solid var(--border)">
         LLM Judge
-        <span class="mg-badge" style="background:rgba(20,184,166,0.1); color:#2dd4bf;">[openai] / [anthropic]</span>
+        <span class="mg-badge" style="background:rgba(148,163,184,0.1); color:#94a3b8;">[openai] / [anthropic]</span>
       </div>
       <div class="metric-item">
-        <div class="metric-item-name"><span class="metric-dot" style="background:#2dd4bf"></span>LLMJudge</div>
+        <div class="metric-item-name"><span class="metric-dot" style="background:#94a3b8"></span>LLMJudge</div>
         <div class="metric-item-desc">Use any LLM to score the output against criteria you define in plain English. Pass your own <code>judge_fn</code> callable or let Rubric auto-detect from your API key environment variables.</div>
       </div>
       <div class="metric-item">
-        <div class="metric-item-name"><span class="metric-dot" style="background:#2dd4bf"></span>GEval</div>
+        <div class="metric-item-name"><span class="metric-dot" style="background:#94a3b8"></span>GEval</div>
         <div class="metric-item-desc">Chain-of-thought evaluation: the LLM reasons step-by-step before assigning a score. More accurate than single-pass judging for nuanced criteria like coherence or factual accuracy.</div>
       </div>
     </div>
@@ -712,7 +1223,7 @@ results.<span class="fn">print_summary</span>()</pre>
       </div>
       <div class="metric-item">
         <div class="metric-item-name"><span class="metric-dot" style="background:#fb923c"></span>ReasoningQuality</div>
-        <div class="metric-item-desc">Measures the ratio of reasoning to tool calls, and checks whether the agent updated its plan based on what it observed — a signal of genuine multi-step thinking.</div>
+        <div class="metric-item-desc">Measures the ratio of reasoning to tool calls, and checks whether the agent updated its plan based on what it observed &mdash; a signal of genuine multi-step thinking.</div>
       </div>
       <div class="metric-item">
         <div class="metric-item-name"><span class="metric-dot" style="background:#fb923c"></span>SafetyCompliance</div>
@@ -727,8 +1238,8 @@ results.<span class="fn">print_summary</span>()</pre>
         <div class="metric-item-desc">Determines whether the agent actually finished the task. Uses heuristic keyword checking by default, or an LLM judge when provided.</div>
       </div>
       <div class="metric-item">
-        <div class="metric-item-name"><span class="metric-dot" style="background:#fb923c"></span>LatencyMetric · CostMetric</div>
-        <div class="metric-item-desc">Enforce performance and cost budgets. Set a max latency in milliseconds or max cost in USD — scores degrade gracefully above the threshold.</div>
+        <div class="metric-item-name"><span class="metric-dot" style="background:#fb923c"></span>LatencyMetric &middot; CostMetric</div>
+        <div class="metric-item-desc">Enforce performance and cost budgets. Set a max latency in milliseconds or max cost in USD &mdash; scores degrade gracefully above the threshold.</div>
       </div>
     </div>
 
@@ -742,7 +1253,7 @@ results.<span class="fn">print_summary</span>()</pre>
     <h2>Start evaluating your LLM today.</h2>
     <p>Free, MIT licensed, and ready in minutes. No account, no cloud, no lock-in.</p>
     <div class="cta-actions">
-      <a href="https://github.com/Kareem-Rashed/rubric-eval#readme" target="_blank" class="btn-primary">Read the Docs →</a>
+      <a href="https://github.com/Kareem-Rashed/rubric-eval#readme" target="_blank" class="btn-primary">Read the Docs &#8594;</a>
       <a href="https://github.com/Kareem-Rashed/rubric-eval" target="_blank" class="btn-secondary">Star on GitHub</a>
     </div>
   </div>
@@ -754,7 +1265,7 @@ results.<span class="fn">print_summary</span>()</pre>
     <span class="footer-logo-mark">R</span>
     Rubric
   </span>
-  <span class="footer-copy">© 2025 Kareem Rashed · MIT License</span>
+  <span class="footer-copy">&copy; 2025 Kareem Rashed &middot; MIT License</span>
   <div class="footer-links">
     <a href="https://github.com/Kareem-Rashed/rubric-eval" target="_blank">GitHub</a>
     <a href="https://pypi.org/project/rubric-eval/" target="_blank">PyPI</a>
@@ -765,8 +1276,8 @@ results.<span class="fn">print_summary</span>()</pre>
 <script>
   function copyInstall(btn) {
     navigator.clipboard.writeText('pip install rubric-eval').then(() => {
-      btn.textContent = '✓ Copied!';
-      setTimeout(() => { btn.textContent = '⎘ Copy'; }, 2000);
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = '\u21d2 Copy'; }, 2000);
     });
   }
 </script>

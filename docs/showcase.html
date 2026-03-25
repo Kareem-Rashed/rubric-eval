@@ -1,48 +1,9 @@
-"""
-HTML and JSON report generation for Rubric.
-"""
-
-from __future__ import annotations
-
-import json
-from pathlib import Path
-
-from rubriceval.core.results import EvalReport
-
-
-def generate_html_report(report: EvalReport, output_path: str) -> None:
-    """Generate a self-contained HTML evaluation report."""
-    data = report.to_dict()
-    data_json = json.dumps(data, indent=2)
-
-    duration = report.duration_seconds
-    if duration is not None:
-        if duration < 60:
-            duration_str = f"{duration:.1f}s"
-        else:
-            duration_str = f"{int(duration // 60)}m {int(duration % 60)}s"
-    else:
-        duration_str = ""
-
-    html = _HTML_TEMPLATE.replace("__DATA_JSON__", data_json)
-    html = html.replace("__PASS_RATE__", f"{report.pass_rate * 100:.1f}")
-    html = html.replace("__TOTAL__", str(report.total))
-    html = html.replace("__PASSED__", str(report.passed))
-    html = html.replace("__FAILED__", str(report.failed))
-    html = html.replace("__AVG_SCORE__", f"{report.avg_score:.3f}")
-    html = html.replace("__STARTED_AT__", report.started_at or "")
-    html = html.replace("__DURATION__", duration_str)
-    html = html.replace("__RUN_NAME__", report.metadata.get("run_name", "Rubric Eval"))
-
-    Path(output_path).write_text(html, encoding="utf-8")
-
-
-_HTML_TEMPLATE = r"""<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rubric — __RUN_NAME__</title>
+  <title>Rubric — Rubric Showcase — Demo Report</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -745,10 +706,10 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
     </div>
     <div class="header-right">
       <div>
-        <div class="header-run-name" id="runName">__RUN_NAME__</div>
-        <div class="header-date" id="headerDate">__STARTED_AT__</div>
+        <div class="header-run-name" id="runName">Rubric Showcase — Demo Report</div>
+        <div class="header-date" id="headerDate">2026-03-25T10:54:41.756245</div>
       </div>
-      <div class="header-duration" id="headerDuration" style="display:none">__DURATION__</div>
+      <div class="header-duration" id="headerDuration" style="display:none">0.0s</div>
     </div>
   </header>
 
@@ -761,19 +722,19 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
         <div class="stat-label">Pass Rate</div>
       </div>
       <div class="stat-card avg-score">
-        <div class="stat-value">__AVG_SCORE__</div>
+        <div class="stat-value">0.912</div>
         <div class="stat-label">Avg Score</div>
       </div>
       <div class="stat-card s-passed">
-        <div class="stat-value">__PASSED__</div>
+        <div class="stat-value">4</div>
         <div class="stat-label">Passed</div>
       </div>
       <div class="stat-card s-failed">
-        <div class="stat-value">__FAILED__</div>
+        <div class="stat-value">2</div>
         <div class="stat-label">Failed</div>
       </div>
       <div class="stat-card s-total">
-        <div class="stat-value">__TOTAL__</div>
+        <div class="stat-value">6</div>
         <div class="stat-label">Total Tests</div>
       </div>
     </div>
@@ -871,7 +832,1060 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
   </div>
 
   <script>
-    const DATA = __DATA_JSON__;
+    const DATA = {
+  "summary": {
+    "total": 6,
+    "passed": 4,
+    "failed": 2,
+    "pass_rate": 0.6667,
+    "avg_score": 0.9118,
+    "duration_seconds": 0.000479
+  },
+  "metrics": {
+    "tool_call_accuracy": {
+      "pass_rate": 0.8333333333333334,
+      "avg_score": 0.875,
+      "total": 6
+    },
+    "trace_quality": {
+      "pass_rate": 1.0,
+      "avg_score": 1.0,
+      "total": 6
+    },
+    "task_completion": {
+      "pass_rate": 1.0,
+      "avg_score": 0.7333333333333334,
+      "total": 6
+    },
+    "latency": {
+      "pass_rate": 0.8333333333333334,
+      "avg_score": 0.9506666666666667,
+      "total": 6
+    },
+    "cost": {
+      "pass_rate": 1.0,
+      "avg_score": 1.0,
+      "total": 6
+    }
+  },
+  "started_at": "2026-03-25T10:54:41.756245",
+  "finished_at": "2026-03-25T10:54:41.756724",
+  "metadata": {
+    "run_name": "Rubric Showcase \u2014 Demo Report"
+  },
+  "results": [
+    {
+      "name": "Flight booking \u2014 Cairo to Paris",
+      "input": "Book a round-trip economy flight from Cairo to Paris for next Friday.",
+      "actual_output": "Done! I've successfully booked your round-trip economy flight CAI \u2192 CDG for Friday, April 4th. Booking reference: RUB-2024-FF9A. Total: $487. Confirmation sent to your email.",
+      "expected_output": "Booking confirmed with reference number.",
+      "passed": true,
+      "overall_score": 0.96,
+      "error": null,
+      "evaluated_at": "2026-03-25T10:54:41.756305",
+      "is_agent": true,
+      "latency_ms": 1498,
+      "cost_usd": 0.0031,
+      "token_usage": {
+        "input_tokens": 1240,
+        "output_tokens": 387
+      },
+      "metrics": [
+        {
+          "name": "tool_call_accuracy",
+          "score": 1.0,
+          "passed": true,
+          "reason": "All tool requirements met. Called: ['search_flights', 'check_availability', 'book_flight', 'send_confirmation']",
+          "metadata": {
+            "expected_tools": [
+              "search_flights",
+              "check_availability",
+              "book_flight",
+              "send_confirmation"
+            ],
+            "forbidden_tools": [
+              "charge_card_twice",
+              "delete_booking"
+            ],
+            "actual_tools": [
+              "search_flights",
+              "check_availability",
+              "book_flight",
+              "send_confirmation"
+            ]
+          }
+        },
+        {
+          "name": "trace_quality",
+          "score": 1.0,
+          "passed": true,
+          "reason": "Trace looks clean. 10 steps taken.",
+          "metadata": {
+            "steps_taken": 10,
+            "max_steps": 15
+          }
+        },
+        {
+          "name": "task_completion",
+          "score": 0.8,
+          "passed": true,
+          "reason": "Heuristic task completion score: 0.80. Pass a judge_fn for LLM-based evaluation.",
+          "metadata": {}
+        },
+        {
+          "name": "latency",
+          "score": 1.0,
+          "passed": true,
+          "reason": "Latency 1498ms is within budget (5000ms).",
+          "metadata": {
+            "latency_ms": 1498,
+            "max_ms": 5000
+          }
+        },
+        {
+          "name": "cost",
+          "score": 1.0,
+          "passed": true,
+          "reason": "Cost $0.00310 is within budget ($0.05000).",
+          "metadata": {
+            "cost_usd": 0.0031,
+            "max_cost_usd": 0.05
+          }
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "search_flights",
+          "arguments": {
+            "origin": "CAI",
+            "destination": "CDG",
+            "date": "2024-04-04",
+            "class": "economy",
+            "round_trip": true
+          },
+          "output": "[{\"id\":\"AF123\",\"price\":487,\"stops\":0,\"duration\":\"5h20m\"},{\"id\":\"LH456\",\"price\":521,\"stops\":1}]",
+          "error": null,
+          "latency_ms": 312
+        },
+        {
+          "name": "check_availability",
+          "arguments": {
+            "flight_id": "AF123",
+            "passengers": 1
+          },
+          "output": "{\"available\": true, \"seats_left\": 14, \"fare_class\": \"Y\"}",
+          "error": null,
+          "latency_ms": 188
+        },
+        {
+          "name": "book_flight",
+          "arguments": {
+            "flight_id": "AF123",
+            "passengers": 1,
+            "class": "economy"
+          },
+          "output": "{\"booking_ref\": \"RUB-2024-FF9A\", \"status\": \"confirmed\", \"total_usd\": 487}",
+          "error": null,
+          "latency_ms": 654
+        },
+        {
+          "name": "send_confirmation",
+          "arguments": {
+            "booking_ref": "RUB-2024-FF9A",
+            "channel": "email"
+          },
+          "output": "{\"sent\": true, \"to\": \"user@example.com\"}",
+          "error": null,
+          "latency_ms": 145
+        }
+      ],
+      "trace": [
+        {
+          "type": "thought",
+          "content": "User wants a round-trip economy flight from Cairo (CAI) to Paris (CDG) on Friday April 4th. I should search for available options first.",
+          "latency_ms": 58,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "search_flights(origin=CAI, destination=CDG, date=2024-04-04, class=economy, round_trip=True)",
+          "latency_ms": 312,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "Found 2 options: AF123 at $487 non-stop (5h20m) and LH456 at $521 with 1 stop. AF123 is better value.",
+          "latency_ms": 22,
+          "metadata": {}
+        },
+        {
+          "type": "thought",
+          "content": "AF123 is cheaper and non-stop \u2014 the better choice. Let me verify seat availability before committing.",
+          "latency_ms": 41,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "check_availability(flight_id=AF123, passengers=1)",
+          "latency_ms": 188,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "AF123 has 14 seats remaining in economy (fare class Y). Safe to book.",
+          "latency_ms": 18,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "book_flight(flight_id=AF123, passengers=1, class=economy)",
+          "latency_ms": 654,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "Booking confirmed! Reference: RUB-2024-FF9A. Total charged: $487.",
+          "latency_ms": 31,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "send_confirmation(booking_ref=RUB-2024-FF9A, channel=email)",
+          "latency_ms": 145,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "Confirmation email sent successfully to user@example.com.",
+          "latency_ms": 12,
+          "metadata": {}
+        }
+      ],
+      "expected_tools": [
+        "search_flights",
+        "check_availability",
+        "book_flight",
+        "send_confirmation"
+      ],
+      "forbidden_tools": [
+        "charge_card_twice",
+        "delete_booking"
+      ],
+      "max_steps": 15
+    },
+    {
+      "name": "Research \u2014 attention mechanism papers",
+      "input": "Find recent papers on transformer attention mechanisms and summarize the key findings.",
+      "actual_output": "I found 3 key papers: (1) FlashAttention-2 reduces memory 4\u00d7 via improved tiling. (2) Ring Attention enables infinite context via distributed blockwise computation. (3) Longformer uses sparse local+global attention for O(n) vs O(n\u00b2). These advances enable training on much longer sequences at significantly lower cost.",
+      "expected_output": "Summary of recent attention papers.",
+      "passed": true,
+      "overall_score": 0.94,
+      "error": null,
+      "evaluated_at": "2026-03-25T10:54:41.756338",
+      "is_agent": true,
+      "latency_ms": 3280,
+      "cost_usd": 0.0087,
+      "token_usage": {
+        "input_tokens": 3420,
+        "output_tokens": 891
+      },
+      "metrics": [
+        {
+          "name": "tool_call_accuracy",
+          "score": 1.0,
+          "passed": true,
+          "reason": "All tool requirements met. Called: ['search_papers', 'fetch_abstract', 'fetch_abstract', 'fetch_abstract', 'summarize_text']",
+          "metadata": {
+            "expected_tools": [
+              "search_papers",
+              "fetch_abstract",
+              "summarize_text"
+            ],
+            "forbidden_tools": [],
+            "actual_tools": [
+              "search_papers",
+              "fetch_abstract",
+              "fetch_abstract",
+              "fetch_abstract",
+              "summarize_text"
+            ]
+          }
+        },
+        {
+          "name": "trace_quality",
+          "score": 1.0,
+          "passed": true,
+          "reason": "Trace looks clean. 13 steps taken.",
+          "metadata": {
+            "steps_taken": 13,
+            "max_steps": 20
+          }
+        },
+        {
+          "name": "task_completion",
+          "score": 0.7,
+          "passed": true,
+          "reason": "Heuristic task completion score: 0.70. Pass a judge_fn for LLM-based evaluation.",
+          "metadata": {}
+        },
+        {
+          "name": "latency",
+          "score": 1.0,
+          "passed": true,
+          "reason": "Latency 3280ms is within budget (5000ms).",
+          "metadata": {
+            "latency_ms": 3280,
+            "max_ms": 5000
+          }
+        },
+        {
+          "name": "cost",
+          "score": 1.0,
+          "passed": true,
+          "reason": "Cost $0.00870 is within budget ($0.05000).",
+          "metadata": {
+            "cost_usd": 0.0087,
+            "max_cost_usd": 0.05
+          }
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "search_papers",
+          "arguments": {
+            "query": "transformer attention mechanisms 2024",
+            "max_results": 10
+          },
+          "output": "[{\"id\":\"2307.08691\",\"title\":\"FlashAttention-2\"},{\"id\":\"2310.01889\",\"title\":\"Ring Attention\"},{\"id\":\"2004.05150\",\"title\":\"Longformer\"}]",
+          "error": null,
+          "latency_ms": 445
+        },
+        {
+          "name": "fetch_abstract",
+          "arguments": {
+            "paper_id": "2307.08691"
+          },
+          "output": "\"FlashAttention-2 achieves 2-4x speedup with improved memory efficiency via IO-aware tiling...\"",
+          "error": null,
+          "latency_ms": 298
+        },
+        {
+          "name": "fetch_abstract",
+          "arguments": {
+            "paper_id": "2310.01889"
+          },
+          "output": "\"Ring Attention enables training on sequences of unbounded length via distributed blockwise computation...\"",
+          "error": null,
+          "latency_ms": 311
+        },
+        {
+          "name": "fetch_abstract",
+          "arguments": {
+            "paper_id": "2004.05150"
+          },
+          "output": "\"Longformer uses sparse local+global attention achieving O(n) complexity for long documents...\"",
+          "error": null,
+          "latency_ms": 287
+        },
+        {
+          "name": "summarize_text",
+          "arguments": {
+            "style": "technical",
+            "max_words": 150
+          },
+          "output": "\"Key advances: FlashAttention-2 (4x memory reduction), Ring Attention (infinite context), Longformer (O(n) complexity).\"",
+          "error": null,
+          "latency_ms": 723
+        }
+      ],
+      "trace": [
+        {
+          "type": "thought",
+          "content": "I need recent papers on transformer attention. ArXiv is the best source.",
+          "latency_ms": 47,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "search_papers(query='transformer attention mechanisms 2024', max_results=10)",
+          "latency_ms": 445,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "Found 3 highly cited papers: FlashAttention-2, Ring Attention, Longformer.",
+          "latency_ms": 26,
+          "metadata": {}
+        },
+        {
+          "type": "thought",
+          "content": "I'll fetch each abstract to extract the core contribution.",
+          "latency_ms": 38,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "fetch_abstract(paper_id=2307.08691) \u2014 FlashAttention-2",
+          "latency_ms": 298,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "FlashAttention-2: 2-4\u00d7 speedup with IO-aware tiling for memory efficiency.",
+          "latency_ms": 19,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "fetch_abstract(paper_id=2310.01889) \u2014 Ring Attention",
+          "latency_ms": 311,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "Ring Attention: unbounded sequence length via distributed blockwise computation.",
+          "latency_ms": 22,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "fetch_abstract(paper_id=2004.05150) \u2014 Longformer",
+          "latency_ms": 287,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "Longformer: sparse local+global attention, O(n) complexity vs O(n\u00b2) dense.",
+          "latency_ms": 17,
+          "metadata": {}
+        },
+        {
+          "type": "thought",
+          "content": "All abstracts collected. Now synthesizing into a coherent technical summary.",
+          "latency_ms": 52,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "summarize_text(style=technical, max_words=150)",
+          "latency_ms": 723,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "Summary complete. Ready to present findings.",
+          "latency_ms": 14,
+          "metadata": {}
+        }
+      ],
+      "expected_tools": [
+        "search_papers",
+        "fetch_abstract",
+        "summarize_text"
+      ],
+      "forbidden_tools": null,
+      "max_steps": 20
+    },
+    {
+      "name": "Code review \u2014 division function",
+      "input": "Review this Python function for bugs:\ndef divide(a, b):\n    return a / b",
+      "actual_output": "I found 1 critical bug: no division-by-zero guard \u2014 raises ZeroDivisionError when b=0.\n\nHere is the fixed version:\ndef divide(a: float, b: float) -> float:\n    if b == 0:\n        raise ValueError('Division by zero')\n    return a / b\n\nAdditional suggestions: add a docstring and consider float vs int handling.",
+      "expected_output": "Identifies division by zero bug and provides a fix.",
+      "passed": true,
+      "overall_score": 0.96,
+      "error": null,
+      "evaluated_at": "2026-03-25T10:54:41.756359",
+      "is_agent": true,
+      "latency_ms": 872,
+      "cost_usd": 0.0024,
+      "token_usage": {
+        "input_tokens": 980,
+        "output_tokens": 312
+      },
+      "metrics": [
+        {
+          "name": "tool_call_accuracy",
+          "score": 1.0,
+          "passed": true,
+          "reason": "All tool requirements met. Called: ['analyze_code', 'run_linter']",
+          "metadata": {
+            "expected_tools": [
+              "analyze_code",
+              "run_linter"
+            ],
+            "forbidden_tools": [],
+            "actual_tools": [
+              "analyze_code",
+              "run_linter"
+            ]
+          }
+        },
+        {
+          "name": "trace_quality",
+          "score": 1.0,
+          "passed": true,
+          "reason": "Trace looks clean. 6 steps taken.",
+          "metadata": {
+            "steps_taken": 6,
+            "max_steps": 10
+          }
+        },
+        {
+          "name": "task_completion",
+          "score": 0.8,
+          "passed": true,
+          "reason": "Heuristic task completion score: 0.80. Pass a judge_fn for LLM-based evaluation.",
+          "metadata": {}
+        },
+        {
+          "name": "latency",
+          "score": 1.0,
+          "passed": true,
+          "reason": "Latency 872ms is within budget (5000ms).",
+          "metadata": {
+            "latency_ms": 872,
+            "max_ms": 5000
+          }
+        },
+        {
+          "name": "cost",
+          "score": 1.0,
+          "passed": true,
+          "reason": "Cost $0.00240 is within budget ($0.05000).",
+          "metadata": {
+            "cost_usd": 0.0024,
+            "max_cost_usd": 0.05
+          }
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "analyze_code",
+          "arguments": {
+            "code": "def divide(a, b):\n    return a / b",
+            "language": "python"
+          },
+          "output": "{\"issues\":[{\"severity\":\"critical\",\"line\":2,\"message\":\"ZeroDivisionError when b=0, no guard present\"}],\"suggestions\":[\"Add type hints\",\"Add docstring\"]}",
+          "error": null,
+          "latency_ms": 389
+        },
+        {
+          "name": "run_linter",
+          "arguments": {
+            "code": "def divide(a, b):\n    return a / b",
+            "rules": [
+              "pylint",
+              "flake8"
+            ]
+          },
+          "output": "{\"warnings\":[\"C0116 Missing function or method docstring\",\"W0107 no type annotations\"],\"errors\":[]}",
+          "error": null,
+          "latency_ms": 241
+        }
+      ],
+      "trace": [
+        {
+          "type": "thought",
+          "content": "I'll run static analysis first to find logical bugs, then the linter for style.",
+          "latency_ms": 39,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "analyze_code(language=python)",
+          "latency_ms": 389,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "Critical: ZeroDivisionError when b=0 (line 2). Style: missing type hints, docstring.",
+          "latency_ms": 28,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "run_linter(rules=[pylint, flake8])",
+          "latency_ms": 241,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "C0116 missing docstring, W0107 no type annotations. No syntax errors.",
+          "latency_ms": 19,
+          "metadata": {}
+        },
+        {
+          "type": "thought",
+          "content": "Analysis complete. I'll report the critical bug with a corrected implementation.",
+          "latency_ms": 44,
+          "metadata": {}
+        }
+      ],
+      "expected_tools": [
+        "analyze_code",
+        "run_linter"
+      ],
+      "forbidden_tools": null,
+      "max_steps": 10
+    },
+    {
+      "name": "Weather check \u2014 forbidden tool violation",
+      "input": "What's the weather in Cairo? Remind me to bring an umbrella.",
+      "actual_output": "It's sunny and 32\u00b0C in Cairo. I've sent you a reminder via email.",
+      "expected_output": null,
+      "passed": false,
+      "overall_score": 0.79,
+      "error": null,
+      "evaluated_at": "2026-03-25T10:54:41.756377",
+      "is_agent": true,
+      "latency_ms": 748,
+      "cost_usd": 0.0018,
+      "token_usage": {
+        "input_tokens": 820,
+        "output_tokens": 214
+      },
+      "metrics": [
+        {
+          "name": "tool_call_accuracy",
+          "score": 0.25,
+          "passed": false,
+          "reason": "Missing expected tools: ['set_reminder']; Called forbidden tools: ['send_email']",
+          "metadata": {
+            "expected_tools": [
+              "get_weather",
+              "set_reminder"
+            ],
+            "forbidden_tools": [
+              "send_email"
+            ],
+            "actual_tools": [
+              "get_weather",
+              "send_email"
+            ]
+          }
+        },
+        {
+          "name": "trace_quality",
+          "score": 1.0,
+          "passed": true,
+          "reason": "Trace looks clean. 5 steps taken.",
+          "metadata": {
+            "steps_taken": 5,
+            "max_steps": 10
+          }
+        },
+        {
+          "name": "task_completion",
+          "score": 0.7,
+          "passed": true,
+          "reason": "Heuristic task completion score: 0.70. Pass a judge_fn for LLM-based evaluation.",
+          "metadata": {}
+        },
+        {
+          "name": "latency",
+          "score": 1.0,
+          "passed": true,
+          "reason": "Latency 748ms is within budget (5000ms).",
+          "metadata": {
+            "latency_ms": 748,
+            "max_ms": 5000
+          }
+        },
+        {
+          "name": "cost",
+          "score": 1.0,
+          "passed": true,
+          "reason": "Cost $0.00180 is within budget ($0.05000).",
+          "metadata": {
+            "cost_usd": 0.0018,
+            "max_cost_usd": 0.05
+          }
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "get_weather",
+          "arguments": {
+            "city": "Cairo",
+            "units": "celsius"
+          },
+          "output": "{\"temp\": 32, \"condition\": \"sunny\", \"humidity\": 22, \"wind_kph\": 14}",
+          "error": null,
+          "latency_ms": 203
+        },
+        {
+          "name": "send_email",
+          "arguments": {
+            "to": "user@example.com",
+            "subject": "Umbrella reminder"
+          },
+          "output": "{\"sent\": true}",
+          "error": null,
+          "latency_ms": 280
+        }
+      ],
+      "trace": [
+        {
+          "type": "tool_call",
+          "content": "get_weather(city=Cairo, units=celsius)",
+          "latency_ms": 203,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "Cairo: 32\u00b0C, sunny, 22% humidity, 14 km/h wind.",
+          "latency_ms": 15,
+          "metadata": {}
+        },
+        {
+          "type": "thought",
+          "content": "User wants a reminder. Easiest route is email \u2014 sending that now.",
+          "latency_ms": 34,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "send_email(to=user@example.com, subject='Umbrella reminder')",
+          "latency_ms": 280,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "Email sent.",
+          "latency_ms": 11,
+          "metadata": {}
+        }
+      ],
+      "expected_tools": [
+        "get_weather",
+        "set_reminder"
+      ],
+      "forbidden_tools": [
+        "send_email"
+      ],
+      "max_steps": 10
+    },
+    {
+      "name": "SQL query \u2014 sales report",
+      "input": "Generate a SQL query to find the top 5 customers by total revenue last month.",
+      "actual_output": "Here is the SQL query:\n\nSELECT c.customer_id, c.name, SUM(o.amount) AS total_revenue\nFROM customers c\nJOIN orders o ON c.customer_id = o.customer_id\nWHERE o.created_at >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')\n  AND o.created_at <  DATE_TRUNC('month', CURRENT_DATE)\nGROUP BY c.customer_id, c.name\nORDER BY total_revenue DESC\nLIMIT 5;",
+      "expected_output": "Valid SQL query selecting top 5 customers by revenue.",
+      "passed": true,
+      "overall_score": 0.94,
+      "error": null,
+      "evaluated_at": "2026-03-25T10:54:41.756394",
+      "is_agent": true,
+      "latency_ms": 1124,
+      "cost_usd": 0.0042,
+      "token_usage": {
+        "input_tokens": 1580,
+        "output_tokens": 423
+      },
+      "metrics": [
+        {
+          "name": "tool_call_accuracy",
+          "score": 1.0,
+          "passed": true,
+          "reason": "All tool requirements met. Called: ['get_schema', 'generate_sql', 'validate_sql']",
+          "metadata": {
+            "expected_tools": [
+              "get_schema",
+              "generate_sql",
+              "validate_sql"
+            ],
+            "forbidden_tools": [],
+            "actual_tools": [
+              "get_schema",
+              "generate_sql",
+              "validate_sql"
+            ]
+          }
+        },
+        {
+          "name": "trace_quality",
+          "score": 1.0,
+          "passed": true,
+          "reason": "Trace looks clean. 8 steps taken.",
+          "metadata": {
+            "steps_taken": 8,
+            "max_steps": 12
+          }
+        },
+        {
+          "name": "task_completion",
+          "score": 0.7,
+          "passed": true,
+          "reason": "Heuristic task completion score: 0.70. Pass a judge_fn for LLM-based evaluation.",
+          "metadata": {}
+        },
+        {
+          "name": "latency",
+          "score": 1.0,
+          "passed": true,
+          "reason": "Latency 1124ms is within budget (5000ms).",
+          "metadata": {
+            "latency_ms": 1124,
+            "max_ms": 5000
+          }
+        },
+        {
+          "name": "cost",
+          "score": 1.0,
+          "passed": true,
+          "reason": "Cost $0.00420 is within budget ($0.05000).",
+          "metadata": {
+            "cost_usd": 0.0042,
+            "max_cost_usd": 0.05
+          }
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "get_schema",
+          "arguments": {
+            "tables": [
+              "customers",
+              "orders"
+            ]
+          },
+          "output": "{\"customers\":{\"columns\":[\"customer_id\",\"name\",\"email\",\"created_at\"]},\"orders\":{\"columns\":[\"order_id\",\"customer_id\",\"amount\",\"created_at\"]}}",
+          "error": null,
+          "latency_ms": 178
+        },
+        {
+          "name": "generate_sql",
+          "arguments": {
+            "intent": "top 5 customers by revenue last month",
+            "dialect": "postgresql"
+          },
+          "output": "\"SELECT c.customer_id, c.name, SUM(o.amount) AS total_revenue FROM customers c JOIN orders o ON c.customer_id = o.customer_id WHERE ...\"",
+          "error": null,
+          "latency_ms": 541
+        },
+        {
+          "name": "validate_sql",
+          "arguments": {
+            "dialect": "postgresql"
+          },
+          "output": "{\"valid\": true, \"warnings\": [], \"estimated_rows\": \"varies\"}",
+          "error": null,
+          "latency_ms": 214
+        }
+      ],
+      "trace": [
+        {
+          "type": "thought",
+          "content": "I need the database schema before generating the SQL so I know the table/column names.",
+          "latency_ms": 43,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "get_schema(tables=[customers, orders])",
+          "latency_ms": 178,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "Schema retrieved: customers(customer_id, name, email, created_at), orders(order_id, customer_id, amount, created_at).",
+          "latency_ms": 21,
+          "metadata": {}
+        },
+        {
+          "type": "thought",
+          "content": "Schema confirmed. I'll generate a PostgreSQL query grouping by customer, filtering to last month, ordered by revenue DESC with LIMIT 5.",
+          "latency_ms": 49,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "generate_sql(intent='top 5 customers by revenue last month', dialect=postgresql)",
+          "latency_ms": 541,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "SQL generated using DATE_TRUNC for clean month boundaries.",
+          "latency_ms": 18,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "validate_sql(dialect=postgresql)",
+          "latency_ms": 214,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "Query is valid. No warnings. Ready to return.",
+          "latency_ms": 12,
+          "metadata": {}
+        }
+      ],
+      "expected_tools": [
+        "get_schema",
+        "generate_sql",
+        "validate_sql"
+      ],
+      "forbidden_tools": null,
+      "max_steps": 12
+    },
+    {
+      "name": "Slow agent \u2014 latency budget exceeded",
+      "input": "Translate 'Hello, how are you?' into Arabic, French, and Japanese.",
+      "actual_output": "I've successfully completed all three translations:\n\u2022 Arabic: \u0645\u0631\u062d\u0628\u0627\u064b\u060c \u0643\u064a\u0641 \u062d\u0627\u0644\u0643\u061f\n\u2022 French: Bonjour, comment allez-vous?\n\u2022 Japanese: \u3053\u3093\u306b\u3061\u306f\u3001\u304a\u5143\u6c17\u3067\u3059\u304b\uff1f",
+      "expected_output": "Translations in Arabic, French, and Japanese.",
+      "passed": false,
+      "overall_score": 0.8808,
+      "error": null,
+      "evaluated_at": "2026-03-25T10:54:41.756717",
+      "is_agent": true,
+      "latency_ms": 6480,
+      "cost_usd": 0.0019,
+      "token_usage": {
+        "input_tokens": 640,
+        "output_tokens": 198
+      },
+      "metrics": [
+        {
+          "name": "tool_call_accuracy",
+          "score": 1.0,
+          "passed": true,
+          "reason": "All tool requirements met. Called: ['translate', 'translate', 'translate']",
+          "metadata": {
+            "expected_tools": [
+              "translate"
+            ],
+            "forbidden_tools": [],
+            "actual_tools": [
+              "translate",
+              "translate",
+              "translate"
+            ]
+          }
+        },
+        {
+          "name": "trace_quality",
+          "score": 1.0,
+          "passed": true,
+          "reason": "Trace looks clean. 7 steps taken.",
+          "metadata": {
+            "steps_taken": 7,
+            "max_steps": 10
+          }
+        },
+        {
+          "name": "task_completion",
+          "score": 0.7,
+          "passed": true,
+          "reason": "Heuristic task completion score: 0.70. Pass a judge_fn for LLM-based evaluation.",
+          "metadata": {}
+        },
+        {
+          "name": "latency",
+          "score": 0.704,
+          "passed": false,
+          "reason": "Latency 6480ms exceeded budget (5000ms).",
+          "metadata": {
+            "latency_ms": 6480,
+            "max_ms": 5000
+          }
+        },
+        {
+          "name": "cost",
+          "score": 1.0,
+          "passed": true,
+          "reason": "Cost $0.00190 is within budget ($0.05000).",
+          "metadata": {
+            "cost_usd": 0.0019,
+            "max_cost_usd": 0.05
+          }
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "translate",
+          "arguments": {
+            "text": "Hello, how are you?",
+            "target": "ar"
+          },
+          "output": "\"\u0645\u0631\u062d\u0628\u0627\u064b\u060c \u0643\u064a\u0641 \u062d\u0627\u0644\u0643\u061f\"",
+          "error": null,
+          "latency_ms": 2100
+        },
+        {
+          "name": "translate",
+          "arguments": {
+            "text": "Hello, how are you?",
+            "target": "fr"
+          },
+          "output": "\"Bonjour, comment allez-vous?\"",
+          "error": null,
+          "latency_ms": 1900
+        },
+        {
+          "name": "translate",
+          "arguments": {
+            "text": "Hello, how are you?",
+            "target": "ja"
+          },
+          "output": "\"\u3053\u3093\u306b\u3061\u306f\u3001\u304a\u5143\u6c17\u3067\u3059\u304b\uff1f\"",
+          "error": null,
+          "latency_ms": 2300
+        }
+      ],
+      "trace": [
+        {
+          "type": "thought",
+          "content": "Three translations needed: Arabic, French, Japanese. I'll call the translate tool for each.",
+          "latency_ms": 38,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "translate(text='Hello, how are you?', target=ar)",
+          "latency_ms": 2100,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "Arabic: \u0645\u0631\u062d\u0628\u0627\u064b\u060c \u0643\u064a\u0641 \u062d\u0627\u0644\u0643\u061f",
+          "latency_ms": 14,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "translate(text='Hello, how are you?', target=fr)",
+          "latency_ms": 1900,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "French: Bonjour, comment allez-vous?",
+          "latency_ms": 12,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "translate(text='Hello, how are you?', target=ja)",
+          "latency_ms": 2300,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "Japanese: \u3053\u3093\u306b\u3061\u306f\u3001\u304a\u5143\u6c17\u3067\u3059\u304b\uff1f",
+          "latency_ms": 16,
+          "metadata": {}
+        }
+      ],
+      "expected_tools": [
+        "translate"
+      ],
+      "forbidden_tools": null,
+      "max_steps": 10
+    }
+  ]
+};
     const summary = DATA.summary || {};
     const passRate = summary.pass_rate || 0;
     const PASS_RATE_PCT = Math.round(passRate * 1000) / 10;
@@ -1317,4 +2331,4 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
     applyFilter();
   </script>
 </body>
-</html>"""
+</html>
