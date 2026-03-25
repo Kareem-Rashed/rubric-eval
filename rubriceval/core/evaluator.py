@@ -105,7 +105,7 @@ def evaluate(
             result = _evaluate_one(test_case)
             report.results.append(result)
             if verbose:
-                _print_test_result(result, indent=4)
+                _print_test_result(result)
 
     report.finished_at = datetime.now().isoformat()
 
@@ -135,7 +135,7 @@ def evaluate(
     return report
 
 
-def _print_test_result(result: TestResult, indent: int = 6):
+def _print_test_result(result: TestResult):
     """Print a single test result with metric details."""
     status = "✅" if result.passed else "❌"
     print(f"    {status} Score: {result.overall_score:.3f}")
