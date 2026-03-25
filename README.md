@@ -229,6 +229,10 @@ report = rubric.evaluate(
 | Metric | Description |
 |--------|-------------|
 | `SemanticSimilarity(threshold=0.8)` | Cosine similarity via sentence-transformers |
+
+### ROUGE (requires `pip install rubric-eval[rouge]`)
+| Metric | Description |
+|--------|-------------|
 | `RougeScore(rouge_type="rougeL")` | ROUGE overlap score for summarization |
 
 ### LLM Judge (requires an LLM API key)

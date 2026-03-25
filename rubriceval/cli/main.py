@@ -19,7 +19,7 @@ import os
 def main():
     parser = argparse.ArgumentParser(
         prog="rubric",
-        description="📐 Rubric — The independent LLM evaluation framework",
+        description=" Rubric — The independent LLM evaluation framework",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -27,7 +27,7 @@ Examples:
   rubric run my_evals.py --output-html report.html
   rubric run my_evals.py --output-json report.json --verbose
 
-Docs: https://github.com/kareemrashed/rubric-eval
+Docs: https://github.com/kareem-rashed/rubric-eval
         """,
     )
 

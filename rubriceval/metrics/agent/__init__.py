@@ -259,14 +259,18 @@ class TaskCompletion(BaseMetric):
         if self.use_heuristic_fallback:
             score = self._heuristic_score(test_case.actual_output)
             passed = score >= self.threshold
+            if passed:
+                reason = f"Heuristic task completion score: {score:.2f} (passed)."
+            else:
+                reason = (
+                    f"Heuristic task completion score: {score:.2f} (failed). "
+                    "Pass a judge_fn for LLM-based evaluation."
+                )
             return MetricResult(
                 metric_name=self.name,
                 score=score,
                 passed=passed,
-                reason=(
-                    f"Heuristic task completion score: {score:.2f}. "
-                    "Pass a judge_fn for LLM-based evaluation."
-                ),
+                reason=reason,
             )
 
         return MetricResult(
