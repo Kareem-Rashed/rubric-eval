@@ -5,112 +5,830 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rubric — rubric-eval</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-           background: #0f0f13; color: #e1e1e6; min-height: 100vh; }
-    .header { background: linear-gradient(135deg, #6c63ff 0%, #4ecdc4 100%);
-              padding: 40px; text-align: center; }
-    .header h1 { font-size: 2.4rem; font-weight: 800; letter-spacing: -1px; color: white; }
-    .header p { color: rgba(255,255,255,0.8); margin-top: 6px; font-size: 1rem; }
-    .stats { display: flex; gap: 16px; padding: 28px 40px; flex-wrap: wrap; }
-    .stat-card { background: #1a1a24; border: 1px solid #2a2a3a; border-radius: 12px;
-                 padding: 20px 28px; flex: 1; min-width: 140px; }
-    .stat-card .value { font-size: 2.2rem; font-weight: 700; }
-    .stat-card .label { color: #888; font-size: 0.82rem; text-transform: uppercase;
-                        letter-spacing: 1px; margin-top: 4px; }
-    .pass-rate .value { color: #4ecdc4; }
-    .score .value { color: #6c63ff; }
-    .passed-count .value { color: #2ecc71; }
-    .failed-count .value { color: #e74c3c; }
-    .progress-bar { height: 8px; background: #2a2a3a; border-radius: 4px; margin: 0 40px 28px; }
-    .progress-fill { height: 100%; border-radius: 4px;
-                     background: linear-gradient(90deg, #6c63ff, #4ecdc4);
-                     transition: width 0.6s ease; }
-    .section { padding: 0 40px 32px; }
-    .section h2 { font-size: 1.1rem; font-weight: 600; color: #888; text-transform: uppercase;
-                  letter-spacing: 1px; margin-bottom: 16px; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #09090b;
+      --surface:   #111115;
+      --surface2:  #17171c;
+      --surface3:  #1d1d24;
+      --border:    #232329;
+      --border2:   #2c2c35;
+      --text:      #e8e8f0;
+      --text2:     #8888a0;
+      --muted:     #50505f;
+      --acc:       #f97316;
+      --green:     #22c55e;
+      --red:       #f43f5e;
+      --blue:      #38bdf8;
+      --slate:     #94a3b8;
+      --radius:    8px;
+      --radius-lg: 12px;
+      --shadow:    0 4px 24px rgba(0,0,0,0.5);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+    /* ── Header ── */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 40px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .header-logo {
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      color: var(--acc);
+    }
+    .header-divider { width: 1px; height: 22px; background: var(--border2); }
+    .header-subtitle { color: var(--muted); font-size: 0.78rem; letter-spacing: 0.3px; }
+    .header-right { display: flex; align-items: center; gap: 18px; }
+    .header-run-name { font-size: 0.88rem; font-weight: 600; color: var(--text); }
+    .header-date { font-size: 0.73rem; color: var(--muted); }
+    .header-duration {
+      font-size: 0.71rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: rgba(249,115,22,0.1);
+      border: 1px solid rgba(249,115,22,0.2);
+      color: var(--acc);
+    }
+
+    /* ── Layout ── */
+    .main { max-width: 1280px; margin: 0 auto; padding: 32px 40px 80px; }
+
+    /* ── Stat Cards ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    @media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 600px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .stat-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      border-radius: 1px 1px 0 0;
+    }
+    .stat-card.pass-rate::after { background: var(--acc); }
+    .stat-card.avg-score::after { background: var(--slate); }
+    .stat-card.s-passed::after  { background: var(--green); }
+    .stat-card.s-failed::after  { background: var(--red); }
+    .stat-card.s-total::after   { background: var(--muted); }
+
+    .stat-value {
+      font-size: 1.75rem;
+      font-weight: 600;
+      line-height: 1;
+      margin-bottom: 5px;
+      letter-spacing: -0.5px;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-card.pass-rate .stat-value { color: var(--acc); }
+    .stat-card.avg-score .stat-value { color: var(--slate); }
+    .stat-card.s-passed  .stat-value { color: var(--green); }
+    .stat-card.s-failed  .stat-value { color: var(--red); }
+    .stat-card.s-total   .stat-value { color: var(--text2); }
+    .stat-label {
+      font-size: 0.67rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.4px;
+      color: var(--muted);
+    }
+
+    /* ── Overview Row ── */
+    .overview-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    @media (max-width: 700px) { .overview-row { grid-template-columns: 1fr; } }
+
+    /* ── Donut Chart ── */
+    .donut-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .donut-wrap { position: relative; flex-shrink: 0; }
+    .donut-svg { width: 108px; height: 108px; transform: rotate(-90deg); }
+    .donut-bg   { fill: none; stroke: var(--border2); stroke-width: 13; }
+    .donut-pass { fill: none; stroke: var(--green); stroke-width: 13; stroke-linecap: round; transition: stroke-dasharray 1s cubic-bezier(0.4,0,0.2,1); }
+    .donut-fail { fill: none; stroke: var(--red);   stroke-width: 13; stroke-linecap: round; transition: stroke-dasharray 1s cubic-bezier(0.4,0,0.2,1); }
+    .donut-center {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .donut-pct { font-size: 1.15rem; font-weight: 600; color: var(--text); line-height: 1; }
+    .donut-sub { font-size: 0.56rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-top: 3px; }
+    .donut-legend { flex: 1; }
+    .donut-legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 0.81rem; }
+    .donut-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .donut-legend-label { color: var(--text2); }
+    .donut-legend-count { margin-left: auto; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    /* ── Per-metric bar chart ── */
+    .metric-chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      overflow: hidden;
+    }
+    .chart-title {
+      font-size: 0.67rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.4px;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .metric-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .metric-bar-row:last-child { margin-bottom: 0; }
+    .metric-bar-name {
+      width: 140px;
+      flex-shrink: 0;
+      font-size: 0.78rem;
+      color: var(--text2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .metric-bar-track {
+      flex: 1;
+      height: 6px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .metric-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+      width: 0%;
+    }
+    .metric-bar-pct {
+      width: 44px;
+      text-align: right;
+      font-size: 0.78rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Section headers ── */
+    .section-header {
+      font-size: 0.67rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.6px;
+      color: var(--muted);
+      margin-bottom: 10px;
+      margin-top: 26px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-header::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ── Metrics table ── */
+    .metrics-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .metrics-table { width: 100%; border-collapse: collapse; }
+    .metrics-table th {
+      background: var(--surface2);
+      color: var(--muted);
+      font-size: 0.67rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.1px;
+      padding: 10px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .metrics-table td { padding: 11px 16px; border-bottom: 1px solid var(--border); font-size: 0.82rem; }
+    .metrics-table tr:last-child td { border-bottom: none; }
+    .metrics-table tbody tr:hover td { background: var(--surface2); }
+    .mbar-wrap { display: flex; align-items: center; gap: 10px; }
+    .mbar { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; max-width: 180px; }
+    .mbar-fill { height: 100%; border-radius: 3px; }
+
+    /* ── Search + filter ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      margin-top: 26px;
+      flex-wrap: wrap;
+    }
+    .search-wrap { position: relative; flex: 1; min-width: 180px; max-width: 300px; }
+    .search-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 7px 12px 7px 32px;
+      font-size: 0.81rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: inherit;
+    }
+    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus { border-color: var(--acc); }
+    .search-icon {
+      position: absolute;
+      left: 9px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+    }
+    .filter-label {
+      font-size: 0.67rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.2px; color: var(--muted);
+    }
+    .filter-btn {
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .filter-btn:hover { border-color: var(--border2); color: var(--text2); }
+    .filter-btn.active      { background: rgba(249,115,22,0.1); border-color: var(--acc); color: var(--acc); }
+    .filter-btn.active-pass { background: rgba(34,197,94,0.1);  border-color: var(--green); color: var(--green); }
+    .filter-btn.active-fail { background: rgba(244,63,94,0.1);  border-color: var(--red);   color: var(--red); }
+    .filter-count { margin-left: auto; font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+
+    /* ── Results table ── */
+    .results-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
     .results-table { width: 100%; border-collapse: collapse; }
-    .results-table th { background: #1a1a24; color: #888; font-size: 0.8rem;
-                        text-transform: uppercase; letter-spacing: 1px; padding: 12px 16px;
-                        text-align: left; border-bottom: 1px solid #2a2a3a; }
-    .results-table td { padding: 14px 16px; border-bottom: 1px solid #1e1e2a; font-size: 0.9rem; }
-    .results-table tr:hover td { background: #1a1a24; cursor: pointer; }
-    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.78rem;
-             font-weight: 600; }
-    .badge-pass { background: rgba(46,204,113,0.15); color: #2ecc71; }
-    .badge-fail { background: rgba(231,76,60,0.15); color: #e74c3c; }
-    .score-bar { display: flex; align-items: center; gap: 8px; }
-    .score-bar-inner { flex: 1; height: 6px; background: #2a2a3a; border-radius: 3px; }
-    .score-bar-fill { height: 100%; border-radius: 3px; }
-    .metric-details { display: none; padding: 16px; background: #14141e;
-                      border-bottom: 1px solid #2a2a3a; }
-    .metric-row { display: flex; justify-content: space-between; align-items: center;
-                  padding: 8px 0; border-bottom: 1px solid #1e1e2a; font-size: 0.85rem; }
-    .metric-row:last-child { border-bottom: none; }
-    .metric-name { color: #aaa; }
-    .metric-score { font-weight: 600; }
-    .metric-reason { color: #666; font-size: 0.8rem; margin-top: 4px; font-style: italic; }
-    .input-output { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
-    .io-box { background: #1a1a24; border: 1px solid #2a2a3a; border-radius: 8px; padding: 12px; }
-    .io-box .io-label { font-size: 0.75rem; color: #666; text-transform: uppercase;
-                        letter-spacing: 1px; margin-bottom: 6px; }
-    .io-box .io-content { font-size: 0.85rem; color: #ccc; white-space: pre-wrap;
-                          word-break: break-word; }
-    .footer { text-align: center; padding: 32px; color: #444; font-size: 0.82rem; }
-    .footer a { color: #6c63ff; text-decoration: none; }
+    .results-table th {
+      background: var(--surface2);
+      color: var(--muted);
+      font-size: 0.67rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.1px;
+      padding: 10px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .results-table .data-row td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .results-table .data-row:last-of-type td { border-bottom: none; }
+    .results-table .data-row:hover td { background: var(--surface2); cursor: pointer; }
+    .results-table .data-row.is-expanded td { background: var(--surface2); border-bottom-color: transparent; }
+
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 2px 8px; border-radius: 4px;
+      font-size: 0.67rem; font-weight: 700; letter-spacing: 0.6px;
+      white-space: nowrap; font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+    .badge-pass  { background: rgba(34,197,94,0.1);  color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+    .badge-fail  { background: rgba(244,63,94,0.1);  color: var(--red);   border: 1px solid rgba(244,63,94,0.2); }
+    .badge-agent { background: rgba(56,189,248,0.08); color: var(--blue); border: 1px solid rgba(56,189,248,0.18); font-size: 0.62rem; }
+
+    .test-name {
+      font-weight: 500; color: var(--text);
+      max-width: 340px; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap;
+    }
+    .test-sub {
+      font-size: 0.71rem; color: var(--muted); margin-top: 2px;
+      max-width: 340px; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap;
+    }
+    .score-cell { display: flex; align-items: center; gap: 8px; min-width: 130px; }
+    .score-track { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .score-fill { height: 100%; border-radius: 3px; }
+    .score-num {
+      font-weight: 700; font-size: 0.81rem; min-width: 40px;
+      text-align: right; font-variant-numeric: tabular-nums;
+    }
+    .metric-pills { display: flex; flex-wrap: wrap; gap: 4px; }
+    .mpill {
+      font-size: 0.65rem; font-weight: 600;
+      padding: 2px 6px; border-radius: 4px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+    .mpill-pass { background: rgba(34,197,94,0.08);  color: #16a34a; }
+    .mpill-fail { background: rgba(244,63,94,0.08);  color: #e11d48; }
+    .expand-btn {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--surface2); border: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted); font-size: 0.6rem;
+      transition: all 0.2s; cursor: pointer; flex-shrink: 0;
+    }
+    .is-expanded .expand-btn {
+      transform: rotate(180deg);
+      background: rgba(249,115,22,0.12);
+      border-color: var(--acc);
+      color: var(--acc);
+    }
+
+    /* ── Detail panel ── */
+    .detail-row td {
+      padding: 0 !important;
+      border-bottom: 1px solid var(--border) !important;
+    }
+    .detail-inner {
+      display: none;
+      padding: 20px 20px 24px;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+    }
+    .detail-inner.open { display: block; }
+
+    .detail-tabs {
+      display: flex; gap: 2px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .dtab {
+      padding: 7px 14px;
+      font-size: 0.75rem; font-weight: 600;
+      color: var(--muted);
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+      margin-bottom: -1px;
+    }
+    .dtab:hover { color: var(--text2); }
+    .dtab.active { color: var(--acc); border-bottom-color: var(--acc); }
+
+    .dtab-panel { display: none; }
+    .dtab-panel.active { display: block; }
+
+    /* IO boxes */
+    .io-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .io-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .io-label {
+      font-size: 0.61rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.2px; color: var(--muted);
+      padding: 7px 12px 6px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    .io-content {
+      font-size: 0.79rem; color: #c4c4d8;
+      white-space: pre-wrap; word-break: break-word;
+      max-height: 180px; overflow-y: auto;
+      line-height: 1.55; padding: 10px 12px;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    }
+    .io-empty { color: var(--muted); font-style: italic; }
+
+    /* Metric breakdown */
+    .metric-breakdown {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .breakdown-header {
+      padding: 8px 14px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.61rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted);
+    }
+    .breakdown-row {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr 100px 52px 60px;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.81rem;
+    }
+    .breakdown-row:last-child { border-bottom: none; }
+    .bd-name { color: var(--text); }
+    .bd-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .bd-bar-fill { height: 100%; border-radius: 2px; }
+    .bd-score { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+    .bd-reason {
+      grid-column: 1 / -1;
+      font-size: 0.74rem; color: var(--muted);
+      font-style: italic; padding: 0 0 2px;
+      display: none;
+    }
+    .breakdown-row.has-reason .bd-reason { display: block; }
+    .breakdown-row.has-reason { grid-template-rows: auto auto; }
+
+    /* ── Agent meta strip ── */
+    .agent-strip {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-bottom: 14px;
+    }
+    .agent-chip {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 5px 11px;
+      font-size: 0.77rem;
+    }
+    .agent-chip-label { color: var(--muted); font-size: 0.71rem; text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600; }
+    .agent-chip-value { font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+
+    /* ── Trace Tree — the differentiator ── */
+    .trace-tree { position: relative; padding-left: 26px; }
+    .trace-tree::before {
+      content: '';
+      position: absolute;
+      left: 11px; top: 22px; bottom: 22px;
+      width: 2px;
+      background: linear-gradient(180deg, var(--acc) 0%, var(--border2) 100%);
+      border-radius: 1px;
+    }
+    .trace-step {
+      position: relative;
+      margin-bottom: 8px;
+    }
+    .trace-step:last-child { margin-bottom: 0; }
+    .trace-dot {
+      position: absolute;
+      left: -19px; top: 14px;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      border: 2px solid var(--bg);
+      z-index: 1;
+    }
+    .step-thought     .trace-dot { background: var(--slate); }
+    .step-tool_call   .trace-dot { background: var(--acc); }
+    .step-observation .trace-dot { background: var(--blue); }
+    .step-llm_call    .trace-dot { background: var(--blue); }
+    .step-default     .trace-dot { background: var(--muted); }
+
+    .trace-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .step-thought     .trace-card { border-left: 3px solid var(--slate); }
+    .step-tool_call   .trace-card { border-left: 3px solid var(--acc); }
+    .step-observation .trace-card { border-left: 3px solid var(--blue); }
+    .step-llm_call    .trace-card { border-left: 3px solid var(--blue); }
+
+    .trace-card-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+    }
+    .trace-type-badge {
+      font-size: 0.63rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; padding: 2px 7px; border-radius: 4px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      flex-shrink: 0;
+    }
+    .step-thought     .trace-type-badge { background: rgba(148,163,184,0.12); color: var(--slate); }
+    .step-tool_call   .trace-type-badge { background: rgba(249,115,22,0.12);  color: var(--acc); }
+    .step-observation .trace-type-badge { background: rgba(56,189,248,0.1);   color: var(--blue); }
+    .step-llm_call    .trace-type-badge { background: rgba(56,189,248,0.1);   color: var(--blue); }
+    .step-default     .trace-type-badge { background: rgba(80,80,95,0.15);    color: var(--muted); }
+
+    .trace-step-num { font-size: 0.67rem; color: var(--muted); font-family: 'SF Mono', 'Fira Code', monospace; flex-shrink: 0; }
+    .trace-preview-text {
+      font-size: 0.78rem; color: var(--text2);
+      flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      margin-left: 6px;
+    }
+    .trace-latency {
+      margin-left: auto;
+      font-size: 0.67rem; font-weight: 600;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+    .trace-expand-icon {
+      font-size: 0.52rem; color: var(--muted); margin-left: 6px;
+      transition: transform 0.2s; flex-shrink: 0;
+    }
+    .trace-card.expanded .trace-expand-icon { transform: rotate(180deg); }
+
+    .trace-card-body {
+      padding: 10px 12px;
+      display: block; /* start expanded */
+    }
+    .trace-card:not(.expanded) .trace-card-body { display: none; }
+    .trace-content {
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 0.78rem; color: #c8c8e0;
+      white-space: pre-wrap; word-break: break-word;
+      max-height: 240px; overflow-y: auto;
+      line-height: 1.55;
+    }
+    .trace-meta {
+      margin-top: 8px;
+      font-size: 0.71rem; color: var(--muted);
+    }
+    .trace-meta-kv { display: inline-flex; gap: 4px; margin-right: 12px; }
+    .trace-meta-key { color: var(--muted); }
+    .trace-meta-val { color: var(--text2); font-weight: 600; }
+
+    /* ── Tool Calls Panel ── */
+    .tool-calls-list { display: flex; flex-direction: column; gap: 8px; }
+    .tool-call-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--acc);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .tool-call-card.has-error { border-left-color: var(--red); }
+    .tool-call-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px;
+      background: var(--surface2);
+      cursor: pointer;
+      user-select: none;
+    }
+    .tool-call-name {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.81rem; font-weight: 600; color: var(--acc);
+    }
+    .tool-call-card.has-error .tool-call-name { color: var(--red); }
+    .tool-call-latency { margin-left: auto; font-size: 0.67rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .tool-call-expand { font-size: 0.52rem; color: var(--muted); margin-left: 6px; transition: transform 0.2s; }
+    .tool-call-card.expanded .tool-call-expand { transform: rotate(180deg); }
+    .tool-call-body { display: none; padding: 12px; border-top: 1px solid var(--border); }
+    .tool-call-card.expanded .tool-call-body { display: block; }
+    .tool-section-label {
+      font-size: 0.61rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--muted); margin-bottom: 6px;
+    }
+    .tool-json {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.74rem; color: #c4c4d8;
+      white-space: pre-wrap; word-break: break-word;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 8px 10px;
+      max-height: 180px; overflow-y: auto;
+      line-height: 1.5; margin-bottom: 10px;
+    }
+    .tool-error {
+      background: rgba(244,63,94,0.06);
+      border: 1px solid rgba(244,63,94,0.2);
+      border-radius: 6px; padding: 8px 10px;
+      font-size: 0.77rem; color: var(--red);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      white-space: pre-wrap;
+    }
+
+    /* ── Empty states ── */
+    .empty-state {
+      text-align: center; padding: 48px 24px; color: var(--muted);
+    }
+    .empty-text { font-size: 0.88rem; }
+
+    .no-data {
+      font-size: 0.79rem; color: var(--muted);
+      font-style: italic; padding: 16px 0;
+      text-align: center;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center; padding: 32px 40px 24px;
+      color: var(--muted); font-size: 0.74rem;
+      border-top: 1px solid var(--border);
+      margin-top: 60px;
+    }
+    .footer a { color: var(--acc); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .anim { animation: fadeUp 0.3s ease both; }
+
+    @media (max-width: 768px) {
+      .main { padding: 20px 16px 60px; }
+      .header { padding: 0 16px; }
+    }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>📐 Rubric</h1>
-    <p>rubric-eval &nbsp;·&nbsp; 2026-03-24T23:42:29.752788</p>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="header-logo">&#9672; Rubric</div>
+      <div class="header-divider"></div>
+      <div class="header-subtitle">LLM &amp; Agent Evaluation</div>
+    </div>
+    <div class="header-right">
+      <div>
+        <div class="header-run-name" id="runName">rubric-eval</div>
+        <div class="header-date" id="headerDate">2026-03-25T20:58:10.546604</div>
+      </div>
+      <div class="header-duration" id="headerDuration" style="display:none">0.0s</div>
+    </div>
+  </header>
+
+  <div class="main">
+
+    <!-- Stat Cards -->
+    <div class="stats-grid">
+      <div class="stat-card pass-rate">
+        <div class="stat-value" id="statPassRate">—</div>
+        <div class="stat-label">Pass Rate</div>
+      </div>
+      <div class="stat-card avg-score">
+        <div class="stat-value">0.867</div>
+        <div class="stat-label">Avg Score</div>
+      </div>
+      <div class="stat-card s-passed">
+        <div class="stat-value">2</div>
+        <div class="stat-label">Passed</div>
+      </div>
+      <div class="stat-card s-failed">
+        <div class="stat-value">1</div>
+        <div class="stat-label">Failed</div>
+      </div>
+      <div class="stat-card s-total">
+        <div class="stat-value">3</div>
+        <div class="stat-label">Total Tests</div>
+      </div>
+    </div>
+
+    <!-- Overview Row: Donut + Metric Bars -->
+    <div class="overview-row">
+
+      <!-- Donut Chart -->
+      <div class="donut-card">
+        <div class="donut-wrap">
+          <svg class="donut-svg" viewBox="0 0 110 110">
+            <circle class="donut-bg"   cx="55" cy="55" r="40"/>
+            <circle class="donut-fail" cx="55" cy="55" r="40" id="donutFail"
+              stroke-dasharray="0 251.2" stroke-dashoffset="0"/>
+            <circle class="donut-pass" cx="55" cy="55" r="40" id="donutPass"
+              stroke-dasharray="0 251.2" stroke-dashoffset="0"/>
+          </svg>
+          <div class="donut-center">
+            <div class="donut-pct" id="donutPct">—</div>
+            <div class="donut-sub">pass</div>
+          </div>
+        </div>
+        <div class="donut-legend">
+          <div class="donut-legend-item">
+            <div class="donut-dot" style="background:var(--green)"></div>
+            <span class="donut-legend-label">Passed</span>
+            <span class="donut-legend-count" style="color:var(--green)" id="legendPassed">—</span>
+          </div>
+          <div class="donut-legend-item">
+            <div class="donut-dot" style="background:var(--red)"></div>
+            <span class="donut-legend-label">Failed</span>
+            <span class="donut-legend-count" style="color:var(--red)" id="legendFailed">—</span>
+          </div>
+          <div class="donut-legend-item">
+            <div class="donut-dot" style="background:var(--muted)"></div>
+            <span class="donut-legend-label">Total</span>
+            <span class="donut-legend-count" id="legendTotal">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Per-metric bar chart -->
+      <div class="metric-chart-card">
+        <div class="chart-title">Pass Rate per Metric</div>
+        <div id="metricBarsContainer"></div>
+      </div>
+    </div>
+
+    <!-- Metrics Overview Table -->
+    <div id="metricsSection"></div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search test cases…" oninput="applyFilter()"/>
+      </div>
+      <span class="filter-label">Show</span>
+      <button class="filter-btn active" id="btn-all"  onclick="setFilter('all')">All</button>
+      <button class="filter-btn" id="btn-pass" onclick="setFilter('pass')">Passed</button>
+      <button class="filter-btn" id="btn-fail" onclick="setFilter('fail')">Failed</button>
+      <span class="filter-count" id="filterCount"></span>
+    </div>
+
+    <!-- Results Table -->
+    <div class="results-card">
+      <table class="results-table" id="resultsTable">
+        <thead>
+          <tr>
+            <th style="width:84px">Status</th>
+            <th>Test Case</th>
+            <th style="width:160px">Score</th>
+            <th>Metrics</th>
+            <th style="width:36px"></th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none">
+        <div class="empty-text">No results match the current filter.</div>
+      </div>
+    </div>
+
   </div>
 
-  <div class="stats">
-    <div class="stat-card pass-rate">
-      <div class="value">66.7%</div>
-      <div class="label">Pass Rate</div>
-    </div>
-    <div class="stat-card score">
-      <div class="value">0.867</div>
-      <div class="label">Avg Score</div>
-    </div>
-    <div class="stat-card passed-count">
-      <div class="value">2</div>
-      <div class="label">Passed</div>
-    </div>
-    <div class="stat-card failed-count">
-      <div class="value">1</div>
-      <div class="label">Failed</div>
-    </div>
-    <div class="stat-card">
-      <div class="value">3</div>
-      <div class="label">Total Tests</div>
-    </div>
-  </div>
-
-  <div class="progress-bar">
-    <div class="progress-fill" id="progressFill"></div>
-  </div>
-
-  <div class="section">
-    <h2>Test Results</h2>
-    <table class="results-table" id="resultsTable">
-      <thead>
-        <tr>
-          <th>Status</th>
-          <th>Test Case</th>
-          <th>Score</th>
-          <th>Metrics</th>
-        </tr>
-      </thead>
-      <tbody id="resultsBody"></tbody>
-    </table>
-  </div>
-
+  <!-- Footer -->
   <div class="footer">
     Generated by <a href="https://github.com/kareemrashed/rubric-eval" target="_blank">Rubric</a>
-    — The independent LLM evaluation framework
+    &nbsp;&middot;&nbsp; rubric-eval
   </div>
 
   <script>
@@ -120,7 +838,8 @@
     "passed": 2,
     "failed": 1,
     "pass_rate": 0.6667,
-    "avg_score": 0.8667
+    "avg_score": 0.8667,
+    "duration_seconds": 7e-05
   },
   "metrics": {
     "tool_call_accuracy": {
@@ -144,8 +863,11 @@
       "total": 3
     }
   },
-  "started_at": "2026-03-24T23:42:29.752788",
-  "finished_at": "2026-03-24T23:42:29.752955",
+  "started_at": "2026-03-25T20:58:10.546604",
+  "finished_at": "2026-03-25T20:58:10.546674",
+  "metadata": {
+    "run_name": "rubric-eval"
+  },
   "results": [
     {
       "name": "Flight booking",
@@ -155,33 +877,139 @@
       "passed": true,
       "overall_score": 0.925,
       "error": null,
-      "evaluated_at": "2026-03-24T23:42:29.752824",
+      "evaluated_at": "2026-03-25T20:58:10.546631",
+      "is_agent": true,
+      "latency_ms": 0.0057220458984375,
+      "cost_usd": null,
+      "token_usage": null,
       "metrics": [
         {
           "name": "tool_call_accuracy",
           "score": 1.0,
           "passed": true,
-          "reason": "All tool requirements met. Called: ['search_flights', 'check_availability', 'book_flight']"
+          "reason": "All tool requirements met. Called: ['search_flights', 'check_availability', 'book_flight']",
+          "metadata": {
+            "expected_tools": [
+              "search_flights",
+              "book_flight"
+            ],
+            "forbidden_tools": [],
+            "actual_tools": [
+              "search_flights",
+              "check_availability",
+              "book_flight"
+            ]
+          }
         },
         {
           "name": "trace_quality",
           "score": 1.0,
           "passed": true,
-          "reason": "Trace looks clean. 7 steps taken."
+          "reason": "Trace looks clean. 7 steps taken.",
+          "metadata": {
+            "steps_taken": 7,
+            "max_steps": 10
+          }
         },
         {
           "name": "task_completion",
           "score": 0.7,
           "passed": true,
-          "reason": "Heuristic task completion score: 0.70. Pass a judge_fn for LLM-based evaluation."
+          "reason": "Heuristic task completion score: 0.70 (passed).",
+          "metadata": {}
         },
         {
           "name": "latency",
           "score": 1.0,
           "passed": true,
-          "reason": "Latency 0ms is within budget (5000ms)."
+          "reason": "Latency 0ms is within budget (5000ms).",
+          "metadata": {
+            "latency_ms": 0.0057220458984375,
+            "max_ms": 5000
+          }
         }
-      ]
+      ],
+      "tool_calls": [
+        {
+          "name": "search_flights",
+          "arguments": {
+            "origin": "CAI",
+            "dest": "CDG"
+          },
+          "output": null,
+          "error": null,
+          "latency_ms": null
+        },
+        {
+          "name": "check_availability",
+          "arguments": {
+            "flight_id": "AF123"
+          },
+          "output": null,
+          "error": null,
+          "latency_ms": null
+        },
+        {
+          "name": "book_flight",
+          "arguments": {
+            "flight_id": "AF123",
+            "seats": 1
+          },
+          "output": null,
+          "error": null,
+          "latency_ms": null
+        }
+      ],
+      "trace": [
+        {
+          "type": "thought",
+          "content": "User wants to book a flight to Paris.",
+          "latency_ms": null,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "search_flights(CAI \u2192 CDG)",
+          "latency_ms": null,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "Found 3 available flights.",
+          "latency_ms": null,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "check_availability(AF123)",
+          "latency_ms": null,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "AF123 has seats available.",
+          "latency_ms": null,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "book_flight(AF123, seats=1)",
+          "latency_ms": null,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "Booking confirmed. Ref: RUB-2024-001",
+          "latency_ms": null,
+          "metadata": {}
+        }
+      ],
+      "expected_tools": [
+        "search_flights",
+        "book_flight"
+      ],
+      "forbidden_tools": null,
+      "max_steps": 10
     },
     {
       "name": "Weather check \u2014 forbidden tool test",
@@ -191,33 +1019,99 @@
       "passed": false,
       "overall_score": 0.75,
       "error": null,
-      "evaluated_at": "2026-03-24T23:42:29.752850",
+      "evaluated_at": "2026-03-25T20:58:10.546653",
+      "is_agent": true,
+      "latency_ms": 0.0021457672119140625,
+      "cost_usd": null,
+      "token_usage": null,
       "metrics": [
         {
           "name": "tool_call_accuracy",
           "score": 0.5,
           "passed": false,
-          "reason": "Called forbidden tools: ['send_email']"
+          "reason": "Called forbidden tools: ['send_email']",
+          "metadata": {
+            "expected_tools": [
+              "get_weather"
+            ],
+            "forbidden_tools": [
+              "send_email"
+            ],
+            "actual_tools": [
+              "get_weather",
+              "send_email"
+            ]
+          }
         },
         {
           "name": "trace_quality",
           "score": 1.0,
           "passed": true,
-          "reason": "Trace looks clean. 2 steps taken."
+          "reason": "Trace looks clean. 2 steps taken.",
+          "metadata": {
+            "steps_taken": 2,
+            "max_steps": null
+          }
         },
         {
           "name": "task_completion",
           "score": 0.5,
           "passed": false,
-          "reason": "Heuristic task completion score: 0.50. Pass a judge_fn for LLM-based evaluation."
+          "reason": "Heuristic task completion score: 0.50 (failed). Pass a judge_fn for LLM-based evaluation.",
+          "metadata": {}
         },
         {
           "name": "latency",
           "score": 1.0,
           "passed": true,
-          "reason": "Latency 0ms is within budget (5000ms)."
+          "reason": "Latency 0ms is within budget (5000ms).",
+          "metadata": {
+            "latency_ms": 0.0021457672119140625,
+            "max_ms": 5000
+          }
         }
-      ]
+      ],
+      "tool_calls": [
+        {
+          "name": "get_weather",
+          "arguments": {
+            "city": "Cairo"
+          },
+          "output": null,
+          "error": null,
+          "latency_ms": null
+        },
+        {
+          "name": "send_email",
+          "arguments": {
+            "to": "user@example.com"
+          },
+          "output": null,
+          "error": null,
+          "latency_ms": null
+        }
+      ],
+      "trace": [
+        {
+          "type": "tool_call",
+          "content": "get_weather(Cairo)",
+          "latency_ms": null,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "send_email(...)",
+          "latency_ms": null,
+          "metadata": {}
+        }
+      ],
+      "expected_tools": [
+        "get_weather"
+      ],
+      "forbidden_tools": [
+        "send_email"
+      ],
+      "max_steps": null
     },
     {
       "name": "Document summarization",
@@ -227,124 +1121,555 @@
       "passed": true,
       "overall_score": 0.925,
       "error": null,
-      "evaluated_at": "2026-03-24T23:42:29.752869",
+      "evaluated_at": "2026-03-25T20:58:10.546669",
+      "is_agent": true,
+      "latency_ms": 0.0019073486328125,
+      "cost_usd": null,
+      "token_usage": null,
       "metrics": [
         {
           "name": "tool_call_accuracy",
           "score": 1.0,
           "passed": true,
-          "reason": "All tool requirements met. Called: ['fetch_document', 'summarize_text']"
+          "reason": "All tool requirements met. Called: ['fetch_document', 'summarize_text']",
+          "metadata": {
+            "expected_tools": [
+              "fetch_document",
+              "summarize_text"
+            ],
+            "forbidden_tools": [],
+            "actual_tools": [
+              "fetch_document",
+              "summarize_text"
+            ]
+          }
         },
         {
           "name": "trace_quality",
           "score": 1.0,
           "passed": true,
-          "reason": "Trace looks clean. 4 steps taken."
+          "reason": "Trace looks clean. 4 steps taken.",
+          "metadata": {
+            "steps_taken": 4,
+            "max_steps": 6
+          }
         },
         {
           "name": "task_completion",
           "score": 0.7,
           "passed": true,
-          "reason": "Heuristic task completion score: 0.70. Pass a judge_fn for LLM-based evaluation."
+          "reason": "Heuristic task completion score: 0.70 (passed).",
+          "metadata": {}
         },
         {
           "name": "latency",
           "score": 1.0,
           "passed": true,
-          "reason": "Latency 0ms is within budget (5000ms)."
+          "reason": "Latency 0ms is within budget (5000ms).",
+          "metadata": {
+            "latency_ms": 0.0019073486328125,
+            "max_ms": 5000
+          }
         }
-      ]
+      ],
+      "tool_calls": [
+        {
+          "name": "fetch_document",
+          "arguments": {
+            "url": "..."
+          },
+          "output": null,
+          "error": null,
+          "latency_ms": null
+        },
+        {
+          "name": "summarize_text",
+          "arguments": {
+            "max_words": 100
+          },
+          "output": null,
+          "error": null,
+          "latency_ms": null
+        }
+      ],
+      "trace": [
+        {
+          "type": "tool_call",
+          "content": "fetch_document(...)",
+          "latency_ms": null,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "Document fetched.",
+          "latency_ms": null,
+          "metadata": {}
+        },
+        {
+          "type": "tool_call",
+          "content": "summarize_text(max_words=100)",
+          "latency_ms": null,
+          "metadata": {}
+        },
+        {
+          "type": "observation",
+          "content": "Summary generated.",
+          "latency_ms": null,
+          "metadata": {}
+        }
+      ],
+      "expected_tools": [
+        "fetch_document",
+        "summarize_text"
+      ],
+      "forbidden_tools": null,
+      "max_steps": 6
     }
   ]
 };
-    const PASS_RATE = 66.7;
+    const summary = DATA.summary || {};
+    const passRate = summary.pass_rate || 0;
+    const PASS_RATE_PCT = Math.round(passRate * 100);
+    let currentFilter = 'all';
+    let searchQuery = '';
 
-    document.getElementById('progressFill').style.width = PASS_RATE + '%';
-
-    function getScoreColor(score) {
-      if (score >= 0.8) return '#2ecc71';
-      if (score >= 0.5) return '#f39c12';
-      return '#e74c3c';
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function escHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
     }
 
+    function scoreColor(s) {
+      if (s >= 0.8) return 'var(--green)';
+      if (s >= 0.5) return 'var(--acc)';
+      return 'var(--red)';
+    }
+
+    function fmtMs(ms) {
+      if (ms === null || ms === undefined) return null;
+      if (ms < 1000) return ms.toFixed(0) + 'ms';
+      return (ms / 1000).toFixed(2) + 's';
+    }
+
+    function fmtJson(obj) {
+      if (!obj || Object.keys(obj).length === 0) return '{}';
+      return JSON.stringify(obj, null, 2);
+    }
+
+    // ── Header setup ─────────────────────────────────────────────────────────
+    document.getElementById('statPassRate').textContent = PASS_RATE_PCT + '%';
+
+    const rawDate = document.getElementById('headerDate').textContent;
+    if (rawDate && rawDate.trim()) {
+      try {
+        const d = new Date(rawDate);
+        document.getElementById('headerDate').textContent =
+          d.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' }) +
+          ' · ' + d.toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' });
+      } catch(_) {}
+    }
+
+    const durEl = document.getElementById('headerDuration');
+    if (durEl.textContent.trim()) durEl.style.display = '';
+
+    // ── Donut Chart ──────────────────────────────────────────────────────────
+    const total  = summary.total  || 0;
+    const passed = summary.passed || 0;
+    const failed = summary.failed || 0;
+    const CIRC = 2 * Math.PI * 40;
+
+    document.getElementById('legendPassed').textContent = passed;
+    document.getElementById('legendFailed').textContent = failed;
+    document.getElementById('legendTotal').textContent  = total;
+    document.getElementById('donutPct').textContent = PASS_RATE_PCT + '%';
+
+    setTimeout(() => {
+      if (total > 0) {
+        const passArc = (passed / total) * CIRC;
+        const failArc = (failed / total) * CIRC;
+        const passEl  = document.getElementById('donutPass');
+        const failEl  = document.getElementById('donutFail');
+        passEl.style.strokeDasharray  = passArc + ' ' + (CIRC - passArc);
+        passEl.style.strokeDashoffset = '0';
+        failEl.style.strokeDasharray  = failArc + ' ' + (CIRC - failArc);
+        failEl.style.strokeDashoffset = -passArc + '';
+      }
+    }, 150);
+
+    // ── Per-Metric bar chart ─────────────────────────────────────────────────
+    const metricsData = DATA.metrics || {};
+    const metricNames = Object.keys(metricsData);
+    const barsContainer = document.getElementById('metricBarsContainer');
+
+    if (metricNames.length === 0) {
+      barsContainer.innerHTML = '<div class="no-data">No metrics data.</div>';
+    } else {
+      const bars = metricNames.map(name => {
+        const m = metricsData[name];
+        const pct = (m.pass_rate * 100).toFixed(1);
+        const col = scoreColor(m.avg_score);
+        return `<div class="metric-bar-row">
+          <div class="metric-bar-name" title="${escHtml(name)}">${escHtml(name)}</div>
+          <div class="metric-bar-track">
+            <div class="metric-bar-fill" style="background:${col}" data-width="${m.pass_rate * 100}"></div>
+          </div>
+          <div class="metric-bar-pct" style="color:${col}">${pct}%</div>
+        </div>`;
+      }).join('');
+      barsContainer.innerHTML = bars;
+
+      setTimeout(() => {
+        barsContainer.querySelectorAll('.metric-bar-fill').forEach(el => {
+          el.style.width = el.dataset.width + '%';
+        });
+      }, 200);
+    }
+
+    // ── Metrics Overview Table ───────────────────────────────────────────────
+    const metricsSection = document.getElementById('metricsSection');
+    if (metricNames.length > 0) {
+      const rows = metricNames.map(name => {
+        const m = metricsData[name];
+        const pct = (m.pass_rate * 100).toFixed(1);
+        const col = scoreColor(m.avg_score);
+        return `<tr>
+          <td><strong>${escHtml(name)}</strong></td>
+          <td>
+            <div class="mbar-wrap">
+              <div class="mbar">
+                <div class="mbar-fill" style="width:${m.pass_rate*100}%;background:${col}"></div>
+              </div>
+              <span style="color:${col};font-weight:700;font-size:0.79rem">${pct}%</span>
+            </div>
+          </td>
+          <td style="font-variant-numeric:tabular-nums;font-weight:600;color:${col}">${m.avg_score.toFixed(3)}</td>
+          <td style="color:var(--muted)">${m.total}</td>
+        </tr>`;
+      }).join('');
+
+      metricsSection.innerHTML = `
+        <div class="section-header">Metrics Overview</div>
+        <div class="metrics-card">
+          <table class="metrics-table">
+            <thead><tr>
+              <th>Metric</th><th>Pass Rate</th><th>Avg Score</th><th>Tests</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    }
+
+    // ── Trace type labels ────────────────────────────────────────────────────
+    const TYPE_LABELS = {
+      thought: 'THINK', tool_call: 'CALL', observation: 'RESULT', llm_call: 'LLM'
+    };
+
+    // ── Build trace tree ─────────────────────────────────────────────────────
+    function buildTraceTree(trace, idxPrefix) {
+      if (!trace || trace.length === 0) {
+        return '<div class="no-data">No trace steps recorded.</div>';
+      }
+      const steps = trace.map((step, i) => {
+        const typeClass = 'step-' + (step.type || 'default').replace(/[^a-z_]/g, '');
+        const label = TYPE_LABELS[step.type] || (step.type ? step.type.toUpperCase() : 'STEP');
+        const latencyStr = step.latency_ms != null ? fmtMs(step.latency_ms) : '';
+        const contentPreview = step.content
+          ? step.content.slice(0, 90) + (step.content.length > 90 ? '…' : '')
+          : '';
+        const metaEntries = step.metadata ? Object.entries(step.metadata) : [];
+        const metaHtml = metaEntries.length > 0
+          ? metaEntries.map(([k,v]) =>
+              `<span class="trace-meta-kv"><span class="trace-meta-key">${escHtml(k)}:</span><span class="trace-meta-val">${escHtml(String(v))}</span></span>`
+            ).join('')
+          : '';
+        const cardId = 'tc-' + idxPrefix + '-' + i;
+
+        return `<div class="trace-step ${typeClass}">
+          <div class="trace-dot"></div>
+          <div class="trace-card expanded" id="${cardId}">
+            <div class="trace-card-header" onclick="toggleTrace('${cardId}')">
+              <span class="trace-step-num">#${i+1}</span>
+              <span class="trace-type-badge">${label}</span>
+              <span class="trace-preview-text">${escHtml(contentPreview)}</span>
+              ${latencyStr ? `<span class="trace-latency">${latencyStr}</span>` : ''}
+              <span class="trace-expand-icon">&#9660;</span>
+            </div>
+            <div class="trace-card-body">
+              <div class="trace-content">${escHtml(step.content || '')}</div>
+              ${metaHtml ? `<div class="trace-meta">${metaHtml}</div>` : ''}
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+      return `<div class="trace-tree">${steps}</div>`;
+    }
+
+    // ── Build tool calls ─────────────────────────────────────────────────────
+    function buildToolCalls(toolCalls, idxPrefix) {
+      if (!toolCalls || toolCalls.length === 0) {
+        return '<div class="no-data">No tool calls recorded.</div>';
+      }
+      const cards = toolCalls.map((tc, i) => {
+        const hasError = !!tc.error;
+        const latencyStr = tc.latency_ms != null ? fmtMs(tc.latency_ms) : null;
+        const argsJson = fmtJson(tc.arguments);
+        const errorHtml = hasError
+          ? `<div class="tool-section-label">Error</div><div class="tool-error">${escHtml(tc.error)}</div>`
+          : '';
+        const outputHtml = tc.output != null
+          ? `<div class="tool-section-label" style="margin-top:10px">Output</div>
+             <div class="tool-json">${escHtml(tc.output)}</div>`
+          : '';
+        const cardId = 'tcc-' + idxPrefix + '-' + i;
+        return `<div class="tool-call-card ${hasError ? 'has-error' : ''}" id="${cardId}">
+          <div class="tool-call-header" onclick="toggleToolCall('${cardId}')">
+            <span class="tool-call-name">${escHtml(tc.name)}()</span>
+            ${latencyStr ? `<span class="tool-call-latency">${latencyStr}</span>` : ''}
+            ${hasError ? '<span class="badge badge-fail" style="margin-left:4px">error</span>' : ''}
+            <span class="tool-call-expand">&#9660;</span>
+          </div>
+          <div class="tool-call-body">
+            <div class="tool-section-label">Arguments</div>
+            <div class="tool-json">${escHtml(argsJson)}</div>
+            ${outputHtml}
+            ${errorHtml}
+          </div>
+        </div>`;
+      }).join('');
+      return `<div class="tool-calls-list">${cards}</div>`;
+    }
+
+    // ── Build agent meta chips ────────────────────────────────────────────────
+    function buildAgentMeta(result) {
+      const chips = [];
+      if (result.latency_ms != null) {
+        chips.push(`<div class="agent-chip"><span class="agent-chip-label">Latency</span><span class="agent-chip-value">${fmtMs(result.latency_ms)}</span></div>`);
+      }
+      if (result.cost_usd != null) {
+        chips.push(`<div class="agent-chip"><span class="agent-chip-label">Cost</span><span class="agent-chip-value">$${result.cost_usd.toFixed(5)}</span></div>`);
+      }
+      if (result.token_usage) {
+        const t = result.token_usage;
+        const parts = [];
+        if (t.input  != null) parts.push('in: ' + t.input);
+        if (t.output != null) parts.push('out: ' + t.output);
+        if (parts.length)
+          chips.push(`<div class="agent-chip"><span class="agent-chip-label">Tokens</span><span class="agent-chip-value">${parts.join(' / ')}</span></div>`);
+      }
+      if (result.trace && result.trace.length > 0) {
+        chips.push(`<div class="agent-chip"><span class="agent-chip-label">Steps</span><span class="agent-chip-value">${result.trace.length}</span></div>`);
+      }
+      if (result.tool_calls && result.tool_calls.length > 0) {
+        chips.push(`<div class="agent-chip"><span class="agent-chip-label">Tool Calls</span><span class="agent-chip-value">${result.tool_calls.length}</span></div>`);
+      }
+      if (result.expected_tools && result.expected_tools.length > 0) {
+        chips.push(`<div class="agent-chip"><span class="agent-chip-label">Expected Tools</span><span class="agent-chip-value">${escHtml(result.expected_tools.join(', '))}</span></div>`);
+      }
+      return chips.length > 0 ? `<div class="agent-strip">${chips.join('')}</div>` : '';
+    }
+
+    // ── Render results ───────────────────────────────────────────────────────
     const tbody = document.getElementById('resultsBody');
 
     DATA.results.forEach((result, idx) => {
-      const color = getScoreColor(result.overall_score);
+      const color = scoreColor(result.overall_score);
       const badge = result.passed
         ? '<span class="badge badge-pass">PASS</span>'
         : '<span class="badge badge-fail">FAIL</span>';
-
-      const metricPills = result.metrics.map(m => {
-        const c = m.passed ? '#2ecc71' : '#e74c3c';
-        return `<span style="color:${c}; font-size:0.8rem; margin-right:6px;">${m.name}</span>`;
-      }).join('');
-
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${badge}</td>
-        <td style="max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-          ${result.name || result.input}
-        </td>
-        <td>
-          <div class="score-bar">
-            <div class="score-bar-inner">
-              <div class="score-bar-fill" style="width:${result.overall_score*100}%; background:${color};"></div>
-            </div>
-            <span style="color:${color}; font-weight:600; min-width:42px;">${result.overall_score.toFixed(3)}</span>
-          </div>
-        </td>
-        <td>${metricPills}</td>
-      `;
-      row.style.cursor = 'pointer';
-      row.onclick = () => toggleDetails(idx);
-      tbody.appendChild(row);
-
-      // Detail row
-      const metricDetails = result.metrics.map(m => {
-        const c = m.passed ? '#2ecc71' : '#e74c3c';
-        const reason = m.reason ? `<div class="metric-reason">${m.reason}</div>` : '';
-        return `
-          <div class="metric-row">
-            <span class="metric-name">${m.name}</span>
-            <span class="metric-score" style="color:${c}">${m.score.toFixed(3)}</span>
-          </div>
-          ${reason}
-        `;
-      }).join('');
-
-      const expectedHtml = result.expected_output
-        ? `<div class="io-box"><div class="io-label">Expected</div>
-           <div class="io-content">${escHtml(result.expected_output)}</div></div>`
+      const agentBadge = result.is_agent
+        ? '<span class="badge badge-agent" style="margin-left:4px">AGENT</span>'
         : '';
 
-      const detailRow = document.createElement('tr');
-      detailRow.innerHTML = `
-        <td colspan="4">
-          <div class="metric-details" id="detail-${idx}">
-            <div class="input-output">
-              <div class="io-box"><div class="io-label">Input</div>
-                <div class="io-content">${escHtml(result.input)}</div></div>
-              <div class="io-box"><div class="io-label">Actual Output</div>
-                <div class="io-content">${escHtml(result.actual_output)}</div></div>
-              ${expectedHtml}
+      const pills = result.metrics.map(m => {
+        const cls = m.passed ? 'mpill-pass' : 'mpill-fail';
+        return `<span class="mpill ${cls}">${escHtml(m.name)}</span>`;
+      }).join('');
+
+      const nameText = result.name || ('Test #' + (idx + 1));
+      const subText  = result.name ? result.input : '';
+
+      // Data row
+      const dataRow = document.createElement('tr');
+      dataRow.className = 'data-row';
+      dataRow.dataset.idx    = idx;
+      dataRow.dataset.passed = result.passed ? '1' : '0';
+      dataRow.dataset.name   = (result.name || result.input || '').toLowerCase();
+      dataRow.innerHTML = `
+        <td>${badge}${agentBadge}</td>
+        <td>
+          <div class="test-name">${escHtml(nameText)}</div>
+          ${subText ? `<div class="test-sub">${escHtml(subText)}</div>` : ''}
+        </td>
+        <td>
+          <div class="score-cell">
+            <div class="score-track">
+              <div class="score-fill" style="width:${result.overall_score*100}%;background:${color}"></div>
             </div>
-            <div style="margin-top:16px;">${metricDetails}</div>
+            <span class="score-num" style="color:${color}">${result.overall_score.toFixed(3)}</span>
           </div>
         </td>
-      `;
+        <td><div class="metric-pills">${pills}</div></td>
+        <td><div class="expand-btn">&#9660;</div></td>`;
+      dataRow.onclick = () => toggleDetail(idx);
+      tbody.appendChild(dataRow);
+
+      // Build detail content
+      const agentMetaHtml = result.is_agent ? buildAgentMeta(result) : '';
+      const hasTrace = result.is_agent && result.trace && result.trace.length > 0;
+      const hasTools = result.is_agent && result.tool_calls && result.tool_calls.length > 0;
+
+      // Build tabs — for agents with trace, default to trace tab
+      const defaultTab = (hasTrace) ? 'trace' : 'io';
+      let tabs = `<div class="dtab ${defaultTab==='io'?'active':''}" onclick="switchTab(${idx},'io',this)">I/O</div>`;
+      tabs += `<div class="dtab ${defaultTab==='metrics'?'active':''}" onclick="switchTab(${idx},'metrics',this)">Metrics</div>`;
+      if (hasTrace) tabs += `<div class="dtab ${defaultTab==='trace'?'active':''}" onclick="switchTab(${idx},'trace',this)">Trace (${result.trace.length})</div>`;
+      if (hasTools) tabs += `<div class="dtab" onclick="switchTab(${idx},'tools',this)">Tool Calls (${result.tool_calls.length})</div>`;
+
+      // Metric breakdown rows
+      const breakdownRows = result.metrics.map(m => {
+        const c = scoreColor(m.score);
+        const hasReason = !!m.reason;
+        return `<div class="breakdown-row ${hasReason ? 'has-reason' : ''}">
+          <span class="bd-name">${escHtml(m.name)}</span>
+          <div class="bd-bar"><div class="bd-bar-fill" style="width:${m.score*100}%;background:${c}"></div></div>
+          <span class="bd-score" style="color:${c}">${m.score.toFixed(3)}</span>
+          ${m.passed
+            ? '<span class="badge badge-pass" style="font-size:0.62rem;padding:2px 6px">PASS</span>'
+            : '<span class="badge badge-fail" style="font-size:0.62rem;padding:2px 6px">FAIL</span>'}
+          ${hasReason ? `<div class="bd-reason">${escHtml(m.reason)}</div>` : ''}
+        </div>`;
+      }).join('');
+
+      const expectedBox = result.expected_output != null
+        ? `<div class="io-box">
+             <div class="io-label">Expected</div>
+             <div class="io-content">${escHtml(result.expected_output)}</div>
+           </div>`
+        : '';
+
+      // Detail row
+      const detailRow = document.createElement('tr');
+      detailRow.className = 'detail-row';
+      detailRow.dataset.idx    = idx;
+      detailRow.dataset.passed = result.passed ? '1' : '0';
+      detailRow.dataset.name   = dataRow.dataset.name;
+      detailRow.innerHTML = `
+        <td colspan="5">
+          <div class="detail-inner" id="detail-${idx}">
+            ${agentMetaHtml}
+            <div class="detail-tabs" id="tabs-${idx}">${tabs}</div>
+
+            <!-- I/O Panel -->
+            <div class="dtab-panel ${defaultTab==='io'?'active':''}" id="panel-${idx}-io">
+              <div class="io-grid">
+                <div class="io-box">
+                  <div class="io-label">Input</div>
+                  <div class="io-content ${result.input ? '' : 'io-empty'}">${result.input ? escHtml(result.input) : '(none)'}</div>
+                </div>
+                <div class="io-box">
+                  <div class="io-label">Actual Output</div>
+                  <div class="io-content ${result.actual_output ? '' : 'io-empty'}">${result.actual_output ? escHtml(result.actual_output) : '(none)'}</div>
+                </div>
+                ${expectedBox}
+              </div>
+            </div>
+
+            <!-- Metrics Panel -->
+            <div class="dtab-panel ${defaultTab==='metrics'?'active':''}" id="panel-${idx}-metrics">
+              <div class="metric-breakdown">
+                <div class="breakdown-header">Metric Breakdown</div>
+                ${breakdownRows}
+              </div>
+            </div>
+
+            <!-- Trace Panel -->
+            ${hasTrace ? `<div class="dtab-panel ${defaultTab==='trace'?'active':''}" id="panel-${idx}-trace">${buildTraceTree(result.trace, idx)}</div>` : ''}
+
+            <!-- Tool Calls Panel -->
+            ${hasTools ? `<div class="dtab-panel" id="panel-${idx}-tools">${buildToolCalls(result.tool_calls, idx)}</div>` : ''}
+          </div>
+        </td>`;
       tbody.appendChild(detailRow);
     });
 
-    function toggleDetails(idx) {
-      const el = document.getElementById('detail-' + idx);
-      el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    // ── Tab switching ─────────────────────────────────────────────────────────
+    function switchTab(idx, panelName, tabEl) {
+      const detail = document.getElementById('detail-' + idx);
+      detail.querySelectorAll('.dtab-panel').forEach(p => p.classList.remove('active'));
+      detail.querySelectorAll('.dtab').forEach(t => t.classList.remove('active'));
+      const panel = document.getElementById('panel-' + idx + '-' + panelName);
+      if (panel) panel.classList.add('active');
+      if (tabEl) tabEl.classList.add('active');
     }
 
-    function escHtml(str) {
-      if (!str) return '';
-      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    // ── Row expand/collapse ───────────────────────────────────────────────────
+    function toggleDetail(idx) {
+      const inner   = document.getElementById('detail-' + idx);
+      const dataRow = tbody.querySelector('.data-row[data-idx="' + idx + '"]');
+      const isOpen  = inner.classList.contains('open');
+      inner.classList.toggle('open', !isOpen);
+      dataRow.classList.toggle('is-expanded', !isOpen);
     }
+
+    // ── Trace card expand/collapse ────────────────────────────────────────────
+    function toggleTrace(cardId) {
+      const card = document.getElementById(cardId);
+      if (card) card.classList.toggle('expanded');
+    }
+
+    // ── Tool call expand/collapse ─────────────────────────────────────────────
+    function toggleToolCall(cardId) {
+      const card = document.getElementById(cardId);
+      if (card) card.classList.toggle('expanded');
+    }
+
+    // ── Filter & Search ───────────────────────────────────────────────────────
+    function setFilter(f) {
+      currentFilter = f;
+      ['all','pass','fail'].forEach(id => {
+        const btn = document.getElementById('btn-' + id);
+        if (id === f) {
+          btn.className = 'filter-btn' + (id === 'pass' ? ' active-pass' : id === 'fail' ? ' active-fail' : ' active');
+        } else {
+          btn.className = 'filter-btn';
+        }
+      });
+      applyFilter();
+    }
+
+    function applyFilter() {
+      searchQuery = document.getElementById('searchInput').value.toLowerCase();
+      const dataRows   = tbody.querySelectorAll('.data-row');
+      const detailRows = tbody.querySelectorAll('.detail-row');
+      let visible = 0;
+
+      dataRows.forEach((row, i) => {
+        const isPassed = row.dataset.passed === '1';
+        const name     = row.dataset.name || '';
+        const matchFilter = currentFilter === 'all'
+          || (currentFilter === 'pass' && isPassed)
+          || (currentFilter === 'fail' && !isPassed);
+        const matchSearch = !searchQuery || name.includes(searchQuery);
+        const show = matchFilter && matchSearch;
+        row.style.display = show ? '' : 'none';
+        if (detailRows[i]) detailRows[i].style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+
+      const total = dataRows.length;
+      document.getElementById('filterCount').textContent =
+        (currentFilter === 'all' && !searchQuery)
+          ? total + ' tests'
+          : visible + ' of ' + total + ' tests';
+      document.getElementById('emptyState').style.display = visible === 0 ? 'block' : 'none';
+    }
+
+    // Init
+    applyFilter();
   </script>
 </body>
 </html>
