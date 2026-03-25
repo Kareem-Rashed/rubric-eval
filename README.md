@@ -1,10 +1,9 @@
 <div align="center">
-  <img src="docs/logo-wide.svg" alt="Rubric — pytest for AI" width="300"/>
-  <br/><br/>
-  <strong>The independent LLM &amp; AI agent evaluation framework.</strong>
+  <img src="docs/logo.svg" alt="Rubric" width="72" height="72"/>
+  <h1>Rubric</h1>
+  <p><strong>The independent LLM &amp; AI agent evaluation framework.</strong></p>
+  <p><em>pytest for AI — neutral, extensible, not owned by any AI company.</em></p>
 </div>
-
-<br/>
 
 [![PyPI version](https://badge.fury.io/py/rubric-eval.svg)](https://badge.fury.io/py/rubric-eval)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
