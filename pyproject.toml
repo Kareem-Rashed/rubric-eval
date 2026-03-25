@@ -48,8 +48,6 @@ dev = [
   "ruff",
   "mypy",
   "hatchling",
-  "build",
-  "twine",
 ]
 
 [project.urls]
