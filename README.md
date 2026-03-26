@@ -50,12 +50,20 @@ pip install "rubric-eval[all]"        # Everything
 ```python
 import rubriceval as rubric
 
+# Replace this with your real LLM call
+def my_llm(prompt: str) -> str:
+    responses = {
+        "What is the capital of France?": "The capital of France is Paris.",
+        "What is 2 + 2?": "4",
+    }
+    return responses.get(prompt, "I don't know.")
+
 # 1. Define test cases
 test_cases = [
     rubric.TestCase(
         input="What is the capital of France?",
         actual_output=my_llm("What is the capital of France?"),
-        expected_output="The capital of France is Paris.",
+        expected_output="Paris",
     ),
     rubric.TestCase(
         input="What is 2 + 2?",
@@ -68,16 +76,13 @@ test_cases = [
 report = rubric.evaluate(
     test_cases=test_cases,
     metrics=[
-        rubric.ExactMatch(),
-        rubric.Contains("Paris"),
-        rubric.SemanticSimilarity(threshold=0.8),
+        rubric.Contains("Paris"),   # LLMs return prose — use Contains, not ExactMatch
+        rubric.ExactMatch(),        # Good for single-token answers like "4"
+        rubric.NotContains(["I don't know", "I'm not sure"]),
     ],
-    output_html="report.html",   # beautiful local dashboard
-    output_json="report.json",   # for CI/CD
+    output_html="report.html",  # local HTML dashboard
+    output_json="report.json",  # for CI/CD
 )
-
-# 3. View results  (evaluate() already prints a full summary when verbose=True)
-# Call report.print_summary() again only if you set verbose=False above
 ```
 
 **Output:**
@@ -86,16 +91,24 @@ report = rubric.evaluate(
 
   [1/2] What is the capital of France?
     ✅ Score: 1.000
-        ✓ exact_match: 1.000
-        ✓ contains: 1.000
-        ✓ semantic_similarity: 0.952
+        ✓ contains: 1.000 — Found all required substrings.
+        ✓ exact_match: 1.000 — Output matches expected.
+        ✓ not_contains: 1.000 — No forbidden strings found.
 
   [2/2] What is 2 + 2?
     ✅ Score: 1.000
+        ✓ contains: 1.000 — Found all required substrings.
+        ✓ exact_match: 1.000 — Output matches expected.
+        ✓ not_contains: 1.000 — No forbidden strings found.
 
 ============================================================
   RUBRIC EVALUATION REPORT
-  Total: 2   ✅ Passed: 2   Pass Rate: 100.0%   Avg Score: 1.000
+============================================================
+  Total:     2
+  ✅ Passed:  2
+  ❌ Failed:  0
+  Pass Rate: 100.0%
+  Avg Score: 1.000
 ============================================================
 ```
 
@@ -278,6 +291,12 @@ rubric run my_evals.py
 
 # With HTML and JSON reports
 rubric run my_evals.py --output-html report.html --output-json report.json
+
+# Suppress per-test output, show only final summary
+rubric run my_evals.py --quiet
+
+# Fail CI if any test fails
+rubric run my_evals.py --fail-on-error
 
 # Check version
 rubric version

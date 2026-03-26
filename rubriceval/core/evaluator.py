@@ -20,6 +20,7 @@ def evaluate(
     metrics: list[BaseMetric],
     *,
     verbose: bool = True,
+    show_summary: bool = True,
     max_workers: int = 1,
     run_name: Optional[str] = None,
     raise_on_failure: bool = False,
@@ -121,7 +122,7 @@ def evaluate(
 
     report.finished_at = datetime.now().isoformat()
 
-    if verbose:
+    if verbose and show_summary:
         report.print_summary()
 
     # Write outputs
