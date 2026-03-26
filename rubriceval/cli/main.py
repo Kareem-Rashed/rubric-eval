@@ -43,7 +43,7 @@ Docs: https://github.com/kareem-rashed/rubric-eval
         "--output-json", metavar="PATH", help="Write JSON report to this path"
     )
     run_parser.add_argument(
-        "--verbose", "-v", action="store_true", default=True, help="Verbose output"
+        "--quiet", "-q", action="store_true", default=False, help="Suppress per-test output, show only final summary"
     )
     run_parser.add_argument(
         "--fail-on-error", action="store_true", help="Exit with code 1 if any test fails"
@@ -79,6 +79,8 @@ def _run_file(args):
     os.environ["RUBRIC_OUTPUT_JSON"] = args.output_json or ""
     if args.fail_on_error:
         os.environ["RUBRIC_RAISE_ON_FAILURE"] = "1"
+    if args.quiet:
+        os.environ["RUBRIC_QUIET"] = "1"
 
     # Load and execute the file
     spec = importlib.util.spec_from_file_location("rubric_eval_file", filepath)

@@ -67,6 +67,8 @@ def evaluate(
         output_json = _os.environ.get("RUBRIC_OUTPUT_JSON") or None
     if not raise_on_failure:
         raise_on_failure = _os.environ.get("RUBRIC_RAISE_ON_FAILURE") == "1"
+    if _os.environ.get("RUBRIC_QUIET") == "1":
+        verbose = False
 
     report = EvalReport(
         metadata={"run_name": run_name or "rubric-eval"},

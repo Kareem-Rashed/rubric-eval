@@ -396,6 +396,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
     }
     .badge-pass  { background: rgba(34,197,94,0.1);  color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
     .badge-fail  { background: rgba(244,63,94,0.1);  color: var(--red);   border: 1px solid rgba(244,63,94,0.2); }
+    .badge-skip  { background: rgba(234,179,8,0.1);  color: #ca8a04;      border: 1px solid rgba(234,179,8,0.2); }
     .badge-agent { background: rgba(56,189,248,0.08); color: var(--blue); border: 1px solid rgba(56,189,248,0.18); font-size: 0.62rem; }
 
     .test-name {
@@ -423,6 +424,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
     }
     .mpill-pass { background: rgba(34,197,94,0.08);  color: #16a34a; }
     .mpill-fail { background: rgba(244,63,94,0.08);  color: #e11d48; }
+    .mpill-skip { background: rgba(234,179,8,0.08);  color: #a16207; }
     .expand-btn {
       width: 22px; height: 22px; border-radius: 50%;
       background: var(--surface2); border: 1px solid var(--border2);
@@ -955,14 +957,16 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
     } else {
       const bars = metricNames.map(name => {
         const m = metricsData[name];
-        const pct = (m.pass_rate * 100).toFixed(1);
-        const col = scoreColor(m.avg_score);
+        const isSkipped = m.pass_rate === null || m.pass_rate === undefined;
+        const pct = isSkipped ? '—' : (m.pass_rate * 100).toFixed(1) + '%';
+        const col = isSkipped ? '#a16207' : scoreColor(m.avg_score);
+        const width = isSkipped ? 0 : m.pass_rate * 100;
         return `<div class="metric-bar-row">
           <div class="metric-bar-name" title="${escHtml(name)}">${escHtml(name)}</div>
           <div class="metric-bar-track">
-            <div class="metric-bar-fill" style="background:${col}" data-width="${m.pass_rate * 100}"></div>
+            <div class="metric-bar-fill" style="background:${col}" data-width="${width}"></div>
           </div>
-          <div class="metric-bar-pct" style="color:${col}">${pct}%</div>
+          <div class="metric-bar-pct" style="color:${col}">${pct}</div>
         </div>`;
       }).join('');
       barsContainer.innerHTML = bars;
@@ -979,20 +983,21 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
     if (metricNames.length > 0) {
       const rows = metricNames.map(name => {
         const m = metricsData[name];
-        const pct = (m.pass_rate * 100).toFixed(1);
-        const col = scoreColor(m.avg_score);
+        const isSkipped = m.pass_rate === null || m.pass_rate === undefined;
+        const col = isSkipped ? '#a16207' : scoreColor(m.avg_score);
+        const pct = isSkipped ? '—' : (m.pass_rate * 100).toFixed(1) + '%';
+        const scoreStr = isSkipped ? '—' : (m.avg_score != null ? m.avg_score.toFixed(3) : '—');
+        const barHtml = isSkipped
+          ? `<span class="badge badge-skip" style="font-size:0.65rem">SKIPPED</span>`
+          : `<div class="mbar-wrap">
+               <div class="mbar"><div class="mbar-fill" style="width:${m.pass_rate*100}%;background:${col}"></div></div>
+               <span style="color:${col};font-weight:700;font-size:0.79rem">${pct}</span>
+             </div>`;
         return `<tr>
           <td><strong>${escHtml(name)}</strong></td>
-          <td>
-            <div class="mbar-wrap">
-              <div class="mbar">
-                <div class="mbar-fill" style="width:${m.pass_rate*100}%;background:${col}"></div>
-              </div>
-              <span style="color:${col};font-weight:700;font-size:0.79rem">${pct}%</span>
-            </div>
-          </td>
-          <td style="font-variant-numeric:tabular-nums;font-weight:600;color:${col}">${m.avg_score.toFixed(3)}</td>
-          <td style="color:var(--muted)">${m.total}</td>
+          <td>${barHtml}</td>
+          <td style="font-variant-numeric:tabular-nums;font-weight:600;color:${col}">${scoreStr}</td>
+          <td style="color:var(--muted)">${isSkipped ? m.skipped : m.total}</td>
         </tr>`;
       }).join('');
 
@@ -1130,7 +1135,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
         : '';
 
       const pills = result.metrics.map(m => {
-        const cls = m.passed ? 'mpill-pass' : 'mpill-fail';
+        const cls = m.skipped ? 'mpill-skip' : (m.passed ? 'mpill-pass' : 'mpill-fail');
         return `<span class="mpill ${cls}">${escHtml(m.name)}</span>`;
       }).join('');
 
@@ -1176,15 +1181,19 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
 
       // Metric breakdown rows
       const breakdownRows = result.metrics.map(m => {
-        const c = scoreColor(m.score);
+        const c = m.skipped ? '#a16207' : scoreColor(m.score);
         const hasReason = !!m.reason;
+        const barWidth = m.skipped ? 0 : m.score * 100;
+        const scoreStr = m.skipped ? '—' : m.score.toFixed(3);
         return `<div class="breakdown-row ${hasReason ? 'has-reason' : ''}">
           <span class="bd-name">${escHtml(m.name)}</span>
-          <div class="bd-bar"><div class="bd-bar-fill" style="width:${m.score*100}%;background:${c}"></div></div>
-          <span class="bd-score" style="color:${c}">${m.score.toFixed(3)}</span>
-          ${m.passed
-            ? '<span class="badge badge-pass" style="font-size:0.62rem;padding:2px 6px">PASS</span>'
-            : '<span class="badge badge-fail" style="font-size:0.62rem;padding:2px 6px">FAIL</span>'}
+          <div class="bd-bar"><div class="bd-bar-fill" style="width:${barWidth}%;background:${c}"></div></div>
+          <span class="bd-score" style="color:${c}">${scoreStr}</span>
+          ${m.skipped
+            ? '<span class="badge badge-skip" style="font-size:0.62rem;padding:2px 6px">SKIP</span>'
+            : m.passed
+              ? '<span class="badge badge-pass" style="font-size:0.62rem;padding:2px 6px">PASS</span>'
+              : '<span class="badge badge-fail" style="font-size:0.62rem;padding:2px 6px">FAIL</span>'}
           ${hasReason ? `<div class="bd-reason">${escHtml(m.reason)}</div>` : ''}
         </div>`;
       }).join('');
