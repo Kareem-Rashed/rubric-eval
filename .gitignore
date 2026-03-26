@@ -307,6 +307,7 @@ Thumbs.db
 # Local development
 local_config.py
 dev_config.json
+local/
 
 # ============================================================================
 # END .gitignore

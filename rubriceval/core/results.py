@@ -21,8 +21,11 @@ class MetricResult:
     passed: bool
     reason: Optional[str] = None
     metadata: dict[str, Any] = field(default_factory=dict)
+    skipped: bool = False  # True when a required dependency is not installed
 
     def __repr__(self) -> str:
+        if self.skipped:
+            return f"⚠️  {self.metric_name}: skipped"
         status = "✅" if self.passed else "❌"
         return f"{status} {self.metric_name}: {self.score:.2f}"
 
@@ -39,14 +42,16 @@ class TestResult:
 
     def __post_init__(self):
         if self.metric_results:
-            self.passed = all(r.passed for r in self.metric_results)
+            active = [r for r in self.metric_results if not r.skipped]
+            self.passed = all(r.passed for r in active) if active else True
 
     @property
     def overall_score(self) -> float:
-        """Average score across all metrics."""
-        if not self.metric_results:
+        """Average score across all non-skipped metrics."""
+        active = [r for r in self.metric_results if not r.skipped]
+        if not active:
             return 0.0
-        return sum(r.score for r in self.metric_results) / len(self.metric_results)
+        return sum(r.score for r in active) / len(active)
 
     @property
     def failed_metrics(self) -> list[MetricResult]:
@@ -75,6 +80,7 @@ class TestResult:
                     "name": r.metric_name,
                     "score": round(r.score, 4),
                     "passed": r.passed,
+                    "skipped": r.skipped,
                     "reason": r.reason,
                     "metadata": r.metadata,
                 }
@@ -168,7 +174,7 @@ class EvalReport:
         return sum(r.overall_score for r in self.results) / len(self.results)
 
     def metric_summary(self) -> dict[str, dict]:
-        """Per-metric pass rate and average score."""
+        """Per-metric pass rate and average score (skipped metrics excluded)."""
         metric_data: dict[str, list] = {}
         for result in self.results:
             for mr in result.metric_results:
@@ -178,11 +184,16 @@ class EvalReport:
 
         summary = {}
         for name, mresults in metric_data.items():
-            summary[name] = {
-                "pass_rate": sum(1 for r in mresults if r.passed) / len(mresults),
-                "avg_score": sum(r.score for r in mresults) / len(mresults),
-                "total": len(mresults),
-            }
+            active = [r for r in mresults if not r.skipped]
+            if not active:
+                summary[name] = {"pass_rate": None, "avg_score": None, "total": 0, "skipped": len(mresults)}
+            else:
+                summary[name] = {
+                    "pass_rate": sum(1 for r in active if r.passed) / len(active),
+                    "avg_score": sum(r.score for r in active) / len(active),
+                    "total": len(active),
+                    "skipped": len(mresults) - len(active),
+                }
         return summary
 
     def to_dict(self) -> dict:
@@ -221,10 +232,22 @@ class EvalReport:
         if ms:
             print("  Per-Metric Breakdown:")
             for metric_name, stats in ms.items():
-                bar = "█" * int(stats["pass_rate"] * 20)
-                print(
-                    f"    {metric_name:<30} {stats['pass_rate']*100:5.1f}%  {bar}"
-                )
+                if stats["pass_rate"] is None:
+                    reason = ""
+                    # Pull the skip reason from the first skipped result
+                    for result in self.results:
+                        for mr in result.metric_results:
+                            if mr.metric_name == metric_name and mr.skipped and mr.reason:
+                                reason = mr.reason.split("\n")[0]
+                                break
+                        if reason:
+                            break
+                    print(f"    {metric_name:<30}   ⚠️  skipped — {reason}")
+                else:
+                    bar = "█" * int(stats["pass_rate"] * 20)
+                    print(
+                        f"    {metric_name:<30} {stats['pass_rate']*100:5.1f}%  {bar}"
+                    )
         print()
 
         failures = [r for r in self.results if not r.passed]

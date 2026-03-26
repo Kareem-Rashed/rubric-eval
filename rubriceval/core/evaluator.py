@@ -95,7 +95,8 @@ def evaluate(
             test_case=test_case,
             metric_results=metric_results,
         )
-        test_result.passed = all(r.passed for r in metric_results)
+        active = [r for r in metric_results if not r.skipped]
+        test_result.passed = all(r.passed for r in active) if active else True
         return test_result
 
     if max_workers > 1:
@@ -150,8 +151,12 @@ def _print_test_result(result: TestResult):
     status = "✅" if result.passed else "❌"
     print(f"    {status} Score: {result.overall_score:.3f}")
     for mr in result.metric_results:
-        icon = "  ✓" if mr.passed else "  ✗"
-        reason = f" — {mr.reason}" if mr.reason else ""
-        reason_display = reason.split('\n')[0][:120] if reason else ""
-        print(f"      {icon} {mr.metric_name}: {mr.score:.3f}{reason_display}")
+        if mr.skipped:
+            reason = mr.reason.split("\n")[0] if mr.reason else "missing dependency"
+            print(f"      ⚠  {mr.metric_name}: skipped — {reason}")
+        else:
+            icon = "  ✓" if mr.passed else "  ✗"
+            reason = f" — {mr.reason}" if mr.reason else ""
+            reason_display = reason.split('\n')[0][:120] if reason else ""
+            print(f"      {icon} {mr.metric_name}: {mr.score:.3f}{reason_display}")
     print()

@@ -89,6 +89,7 @@ class SemanticSimilarity(BaseMetric):
                 score=0.0,
                 passed=False,
                 reason=str(e),
+                skipped=True,
             )
         except Exception as e:
             return MetricResult(
@@ -155,4 +156,5 @@ class RougeScore(BaseMetric):
                 score=0.0,
                 passed=False,
                 reason="rouge-score not installed. Run: pip install rouge-score",
+                skipped=True,
             )

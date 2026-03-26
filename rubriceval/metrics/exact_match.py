@@ -24,8 +24,8 @@ class ExactMatch(BaseMetric):
 
     def __init__(
         self,
-        case_sensitive: bool = False,
-        strip: bool = True,
+        case_sensitive: bool = False,     # Default: case-insensitive
+        strip: bool = True,               # Default: trim whitespace
         threshold: float = 1.0,
     ):
         self.case_sensitive = case_sensitive

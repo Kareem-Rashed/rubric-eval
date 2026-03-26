@@ -60,7 +60,7 @@ class TestCase:
     cost_usd: Optional[float] = None
     name: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self): #so user doesnt have to name every test, takees from context
         if self.name is None:
             self.name = self.input[:60] + ("..." if len(self.input) > 60 else "")
 
@@ -88,6 +88,9 @@ class AgentTestCase:
     actual_output: str
     expected_output: Optional[str] = None
     expected_tools: Optional[list[str]] = None  # tools that MUST be called
+
+    """could potentially add, valid_tools (when more than one could be used)"""
+    
     forbidden_tools: Optional[list[str]] = None  # tools that must NOT be called
     tool_calls: list[ToolCall] = field(default_factory=list)
     trace: list[TraceStep] = field(default_factory=list)
