@@ -199,3 +199,58 @@ def test_report_to_json():
     assert "summary" in data
     assert "results" in data
     assert data["summary"]["total"] == 1
+
+
+# ── RougeScore ────────────────────────────────────────────────────────────────
+
+pytest.importorskip("rouge_score", reason="rouge-score not installed")
+
+
+def test_rouge1_identical_strings():
+    metric = rubric.RougeScore(rouge_type="rouge1", threshold=0.9)
+    result = metric.measure(make_test(actual="the cat sat on the mat", expected="the cat sat on the mat"))
+    assert result.passed
+    assert result.score == pytest.approx(1.0, abs=1e-3)
+
+
+def test_rouge2_partial_overlap():
+    metric = rubric.RougeScore(rouge_type="rouge2", threshold=0.0)
+    result = metric.measure(make_test(actual="the cat sat on the mat", expected="the cat ate the rat"))
+    assert isinstance(result.score, float)
+    assert 0.0 <= result.score <= 1.0
+
+
+def test_rougeL_pass():
+    metric = rubric.RougeScore(rouge_type="rougeL", threshold=0.5)
+    result = metric.measure(make_test(actual="the cat sat on the mat", expected="the cat sat on the mat"))
+    assert result.passed
+    assert result.score >= 0.5
+
+
+def test_rougeL_fail_below_threshold():
+    metric = rubric.RougeScore(rouge_type="rougeL", threshold=0.9)
+    result = metric.measure(make_test(actual="completely different text here", expected="the cat sat on the mat"))
+    assert not result.passed
+
+
+def test_rouge_empty_actual():
+    metric = rubric.RougeScore(rouge_type="rouge1", threshold=0.5)
+    result = metric.measure(make_test(actual="", expected="the cat sat on the mat"))
+    assert isinstance(result, rubric.MetricResult)
+    assert result.score == pytest.approx(0.0, abs=1e-3)
+    assert not result.passed
+
+
+def test_rouge_no_expected():
+    metric = rubric.RougeScore(rouge_type="rouge1", threshold=0.5)
+    result = metric.measure(make_test(actual="some text", expected=None))
+    assert isinstance(result, rubric.MetricResult)
+    assert not result.passed
+
+
+def test_rouge_returns_metric_result():
+    metric = rubric.RougeScore(rouge_type="rougeL", threshold=0.5)
+    result = metric.measure(make_test(actual="hello world", expected="hello world"))
+    assert isinstance(result, rubric.MetricResult)
+    assert result.metric_name is not None
+    assert result.reason is not None
