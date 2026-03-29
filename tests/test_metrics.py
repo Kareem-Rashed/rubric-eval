@@ -254,3 +254,61 @@ def test_rouge_returns_metric_result():
     assert isinstance(result, rubric.MetricResult)
     assert result.metric_name is not None
     assert result.reason is not None
+
+
+# ── GEval ─────────────────────────────────────────────────────────────────────
+
+from unittest.mock import MagicMock
+
+
+def _mock_judge(score: float, passed: bool, reason: str = "looks good"):
+    import json
+    return MagicMock(return_value=json.dumps({"score": score, "passed": passed, "reason": reason}))
+
+
+def test_geval_basic_scoring():
+    judge = _mock_judge(0.9, True, "The answer is accurate and concise.")
+    metric = rubric.GEval(name="accuracy", criteria="Is the answer accurate?", judge_fn=judge, threshold=0.7)
+    result = metric.measure(make_test(actual="Paris is the capital of France.", expected="Paris"))
+    assert isinstance(result, rubric.MetricResult)
+    assert result.score == pytest.approx(0.9, abs=1e-3)
+    assert result.passed
+
+
+def test_geval_threshold_pass():
+    judge = _mock_judge(0.8, True)
+    metric = rubric.GEval(name="quality", criteria="Is it high quality?", judge_fn=judge, threshold=0.7)
+    result = metric.measure(make_test(actual="good answer"))
+    assert result.passed
+
+
+def test_geval_threshold_fail():
+    judge = _mock_judge(0.4, False, "The answer is incomplete.")
+    metric = rubric.GEval(name="quality", criteria="Is it high quality?", judge_fn=judge, threshold=0.7)
+    result = metric.measure(make_test(actual="bad answer"))
+    assert not result.passed
+    assert result.score == pytest.approx(0.4, abs=1e-3)
+
+
+def test_geval_returns_metric_result():
+    judge = _mock_judge(0.75, True)
+    metric = rubric.GEval(name="coherence", criteria="Is it coherent?", judge_fn=judge, threshold=0.7)
+    result = metric.measure(make_test(actual="some response"))
+    assert isinstance(result, rubric.MetricResult)
+    assert result.metric_name == "coherence"
+    assert result.reason is not None
+
+
+def test_geval_score_clamped_to_range():
+    import json
+    judge = MagicMock(return_value=json.dumps({"score": 1.5, "passed": True, "reason": "over the top"}))
+    metric = rubric.GEval(name="test", criteria="any", judge_fn=judge, threshold=0.5)
+    result = metric.measure(make_test(actual="response"))
+    assert result.score <= 1.0
+
+
+def test_geval_calls_judge_once():
+    judge = _mock_judge(0.8, True)
+    metric = rubric.GEval(name="test", criteria="any", judge_fn=judge, threshold=0.5)
+    metric.measure(make_test(actual="response"))
+    assert judge.call_count == 1
