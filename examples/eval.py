@@ -60,55 +60,43 @@ faq_tests = [
         name="Pricing inquiry",
         input="What are the pricing plans?",
         actual_output=faq_bot("What are the pricing plans?"),
+        metrics=[rubric.Contains(["$29", "$99", "trial"])],
     ),
     rubric.TestCase(
         name="Cancellation flow",
         input="How do I cancel my subscription?",
         actual_output=faq_bot("How do I cancel my subscription?"),
+        metrics=[rubric.Contains(["Settings", "Billing", "export"])],
     ),
     rubric.TestCase(
         name="Data retention after cancel",
         input="What happens to my data if I cancel?",
         actual_output=faq_bot("What happens to my data if I cancel?"),
+        metrics=[rubric.Contains(["30 days", "deleted"])],
     ),
     rubric.TestCase(
         name="SSO support",
         input="Do you support SSO?",
         actual_output=faq_bot("Do you support SSO?"),
+        metrics=[rubric.Contains(["Growth", "Enterprise", "SAML"])],
     ),
     rubric.TestCase(
         name="Payment security",
         input="Is my payment information secure?",
         actual_output=faq_bot("Is my payment information secure?"),
+        metrics=[rubric.Contains(["PCI", "encrypt"])],  # vague answer — will fail
     ),
 ]
 
-# Safety check — applies to all FAQ responses
+# One call: shared NotContains applies to all, per-test Contains from each TestCase
+print("=" * 60)
+print("FAQ BOT")
+print("=" * 60)
 rubric.evaluate(
     test_cases=faq_tests,
     metrics=[rubric.NotContains(["I don't know", "I'm not sure", "contact support"])],
-    run_name="FAQ Bot — Safety",
-    verbose=False,
+    run_name="FAQ Bot — Pre-ship Eval",
 )
-
-# Per-question content checks — each question requires specific information
-content_checks = [
-    (faq_tests[0], ["$29", "$99", "trial"]),
-    (faq_tests[1], ["Settings", "Billing", "export"]),
-    (faq_tests[2], ["30 days", "deleted"]),
-    (faq_tests[3], ["Growth", "Enterprise", "SAML"]),
-    (faq_tests[4], ["PCI", "encrypt"]),   # vague answer — will fail
-]
-
-print("=" * 60)
-print("FAQ BOT — Content checks")
-print("=" * 60)
-for tc, required in content_checks:
-    rubric.evaluate(
-        test_cases=[tc],
-        metrics=[rubric.Contains(required)],
-        verbose=True,
-    )
 
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -5,7 +5,6 @@ Supports both simple LLM evaluations and complex agent trace evaluations.
 
 from __future__ import annotations
 
-import time
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
@@ -47,6 +46,7 @@ class TestCase:
             input="What is the capital of France?",
             actual_output=my_llm("What is the capital of France?"),
             expected_output="Paris",
+            metrics=[Contains("Paris")],  # optional: per-test metrics
         )
     """
 
@@ -59,6 +59,7 @@ class TestCase:
     token_usage: Optional[dict[str, int]] = None  # {"input": 50, "output": 20}
     cost_usd: Optional[float] = None
     name: Optional[str] = None
+    metrics: list = field(default_factory=list)  # per-test metrics, merged with evaluate()-level metrics
 
     def __post_init__(self): #so user doesnt have to name every test, takees from context
         if self.name is None:
@@ -101,6 +102,7 @@ class AgentTestCase:
     cost_usd: Optional[float] = None
     name: Optional[str] = None
     max_steps: Optional[int] = None  # expected max reasoning steps
+    metrics: list = field(default_factory=list)  # per-test metrics, merged with evaluate()-level metrics
 
     def __post_init__(self):
         if self.name is None:

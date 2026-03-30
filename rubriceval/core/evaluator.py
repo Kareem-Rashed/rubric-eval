@@ -17,7 +17,7 @@ from rubriceval.metrics.base import BaseMetric
 
 def evaluate(
     test_cases: list[Union[TestCase, AgentTestCase]],
-    metrics: list[BaseMetric],
+    metrics: Optional[list[BaseMetric]] = None,
     *,
     verbose: bool = True,
     show_summary: bool = True,
@@ -76,13 +76,16 @@ def evaluate(
     )
     report.started_at = datetime.now().isoformat()
 
+    shared_metrics: list[BaseMetric] = metrics or []
+
     if verbose:
         print(f"\n🔍 Rubric — Running {len(test_cases)} test case(s) "
-              f"with {len(metrics)} metric(s)...\n")
+              f"with {len(shared_metrics)} metric(s)...\n")
 
     def _evaluate_one(test_case: Union[TestCase, AgentTestCase]) -> TestResult:
+        effective_metrics = shared_metrics + list(getattr(test_case, "metrics", []))
         metric_results = []
-        for metric in metrics:
+        for metric in effective_metrics:
             try:
                 result = metric.measure(test_case)
                 metric_results.append(result)
