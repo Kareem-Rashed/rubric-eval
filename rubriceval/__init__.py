@@ -42,6 +42,9 @@ from rubriceval.metrics.semantic import SemanticSimilarity, RougeScore
 # Metrics — LLM judge
 from rubriceval.metrics.llm_judge import LLMJudge, GEval
 
+# Metrics — hallucination detection
+from rubriceval.metrics.hallucination import HallucinationScore
+
 # Metrics — agent & performance
 from rubriceval.metrics.agent import (
     ToolCallAccuracy,
@@ -83,6 +86,8 @@ __all__ = [
     # LLM judge
     "LLMJudge",
     "GEval",
+    # Hallucination detection
+    "HallucinationScore",
     # Agent metrics
     "ToolCallAccuracy",
     "TraceQuality",

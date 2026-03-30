@@ -312,3 +312,78 @@ def test_geval_calls_judge_once():
     metric = rubric.GEval(name="test", criteria="any", judge_fn=judge, threshold=0.5)
     metric.measure(make_test(actual="response"))
     assert judge.call_count == 1
+
+
+# ── HallucinationScore ────────────────────────────────────────────────────────
+
+def _make_hallucination_judge(score: float, passed: bool, reason: str = "ok", claims: list = None):
+    import json
+    return MagicMock(return_value=json.dumps({
+        "score": score,
+        "passed": passed,
+        "reason": reason,
+        "hallucinated_claims": claims or [],
+    }))
+
+
+def test_hallucination_faithful_output():
+    judge = _make_hallucination_judge(1.0, True, "All claims supported by context.")
+    metric = rubric.HallucinationScore(judge_fn=judge, threshold=0.7)
+    tc = TestCase(
+        input="Where is the Eiffel Tower?",
+        actual_output="The Eiffel Tower is in Paris, France.",
+        context="The Eiffel Tower is located in Paris, France.",
+    )
+    result = metric.measure(tc)
+    assert result.passed
+    assert result.score == pytest.approx(1.0, abs=1e-3)
+
+
+def test_hallucination_hallucinated_output():
+    judge = _make_hallucination_judge(0.2, False, "Claims not in context.", ["built in 1776"])
+    metric = rubric.HallucinationScore(judge_fn=judge, threshold=0.7)
+    tc = TestCase(
+        input="When was the Eiffel Tower built?",
+        actual_output="The Eiffel Tower was built in 1776.",
+        context="The Eiffel Tower was built in 1889.",
+    )
+    result = metric.measure(tc)
+    assert not result.passed
+    assert result.score < 0.7
+
+
+def test_hallucination_no_context():
+    metric = rubric.HallucinationScore(judge_fn=MagicMock(), threshold=0.7)
+    tc = TestCase(input="question", actual_output="answer", context=None)
+    result = metric.measure(tc)
+    assert isinstance(result, rubric.MetricResult)
+    assert not result.passed
+    assert "context" in result.reason.lower()
+
+
+def test_hallucination_score_clamped():
+    import json
+    judge = MagicMock(return_value=json.dumps({"score": 1.8, "passed": True, "reason": "fine", "hallucinated_claims": []}))
+    metric = rubric.HallucinationScore(judge_fn=judge, threshold=0.7)
+    tc = TestCase(input="q", actual_output="a", context="some context")
+    result = metric.measure(tc)
+    assert result.score <= 1.0
+
+
+def test_hallucination_returns_metric_result():
+    judge = _make_hallucination_judge(0.9, True)
+    metric = rubric.HallucinationScore(judge_fn=judge, threshold=0.7)
+    tc = TestCase(input="q", actual_output="a", context="some context")
+    result = metric.measure(tc)
+    assert isinstance(result, rubric.MetricResult)
+    assert result.metric_name == "hallucination"
+    assert result.reason is not None
+
+
+def test_hallucination_partial_score():
+    judge = _make_hallucination_judge(0.5, False, "Some claims unsupported.", ["claim X"])
+    metric = rubric.HallucinationScore(judge_fn=judge, threshold=0.7)
+    tc = TestCase(input="q", actual_output="some answer with mix", context="partial context")
+    result = metric.measure(tc)
+    assert result.score == pytest.approx(0.5, abs=1e-3)
+    assert not result.passed
