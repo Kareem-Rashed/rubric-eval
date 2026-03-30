@@ -68,6 +68,9 @@ from rubriceval.metrics.base import BaseMetric
 # Capture — decorator and context manager for recording LLM calls
 from rubriceval.capture import capture, track, get_session, reset_session
 
+# Loaders — import traces from LangFuse and LangSmith
+from rubriceval.integrations.loaders import load_langfuse, load_langsmith
+
 __all__ = [
     # Core
     "evaluate",
@@ -109,4 +112,7 @@ __all__ = [
     "track",
     "get_session",
     "reset_session",
+    # Loaders
+    "load_langfuse",
+    "load_langsmith",
 ]
