@@ -855,27 +855,31 @@
           <div class="code-dot" style="background:#ff5f57"></div>
           <div class="code-dot" style="background:#febc2e"></div>
           <div class="code-dot" style="background:#28c840"></div>
-          <span class="code-block-title">basic_eval.py</span>
+          <span class="code-block-title">eval.py</span>
         </div>
         <pre><span class="kw">import</span> rubriceval <span class="kw">as</span> rubric
 
-<span class="cmt"># Any function that returns a string</span>
-<span class="kw">def</span> <span class="fn">my_llm</span>(prompt):
-    <span class="kw">return</span> <span class="str">"The capital of France is Paris."</span>
+<span class="cmt"># Replace with your real LLM call</span>
+<span class="kw">def</span> <span class="fn">call_llm</span>(prompt): ...
 
-results = rubric.<span class="fn">evaluate</span>(
+<span class="cmt"># Per-test metrics live on the TestCase.</span>
+<span class="cmt"># Shared metrics on evaluate() apply to all.</span>
+report = rubric.<span class="fn">evaluate</span>(
     test_cases=[
         rubric.<span class="cls">TestCase</span>(
-            input=<span class="str">"What is the capital of France?"</span>,
-            actual_output=<span class="fn">my_llm</span>(<span class="str">"What is the capital of France?"</span>),
-            expected_output=<span class="str">"Paris"</span>,
-        )
+            name=<span class="str">"Pricing inquiry"</span>,
+            input=<span class="str">"What are the pricing plans?"</span>,
+            actual_output=<span class="fn">call_llm</span>(<span class="str">"What are the pricing plans?"</span>),
+            metrics=[rubric.<span class="cls">Contains</span>([<span class="str">"$29"</span>, <span class="str">"$99"</span>, <span class="str">"trial"</span>])],
+        ),
+        rubric.<span class="cls">TestCase</span>(
+            name=<span class="str">"Cancellation flow"</span>,
+            input=<span class="str">"How do I cancel my subscription?"</span>,
+            actual_output=<span class="fn">call_llm</span>(<span class="str">"How do I cancel my subscription?"</span>),
+            metrics=[rubric.<span class="cls">Contains</span>([<span class="str">"Settings"</span>, <span class="str">"Billing"</span>, <span class="str">"export"</span>])],
+        ),
     ],
-    metrics=[
-        rubric.<span class="cls">Contains</span>(<span class="str">"Paris"</span>),
-        rubric.<span class="cls">NotContains</span>(<span class="str">"I don't know"</span>),
-        rubric.<span class="cls">SemanticSimilarity</span>(threshold=<span class="num">0.8</span>),
-    ],
+    metrics=[rubric.<span class="cls">NotContains</span>([<span class="str">"I don't know"</span>, <span class="str">"I'm not sure"</span>])],
     output_html=<span class="str">"report.html"</span>,
 )</pre>
       </div>
@@ -979,38 +983,37 @@ report.<span class="fn">print_summary</span>()</pre>
         </div>
         <pre><span class="kw">import</span> rubriceval <span class="kw">as</span> rubric
 
+<span class="cmt"># Pass what your agent actually did — tool calls, trace, latency</span>
 results = rubric.<span class="fn">evaluate</span>(
     test_cases=[
         rubric.<span class="cls">AgentTestCase</span>(
-            name=<span class="str">"flight booking"</span>,
-            input=<span class="str">"Book a flight to Tokyo"</span>,
-            actual_output=agent_output,
-            expected_tools=[
-                <span class="str">"search_flights"</span>,
-                <span class="str">"check_availability"</span>,
-                <span class="str">"book_flight"</span>,
-            ],
+            name=<span class="str">"Order inquiry"</span>,
+            input=<span class="str">"Where is my order #ORD-9821?"</span>,
+            actual_output=agent.<span class="fn">run</span>(<span class="str">"Where is my order #ORD-9821?"</span>),
+            expected_tools=[<span class="str">"lookup_order"</span>, <span class="str">"create_ticket"</span>],
+            tool_calls=agent.tool_calls,
+            trace=agent.trace,
+            latency_ms=agent.latency_ms,
+        ),
+        rubric.<span class="cls">AgentTestCase</span>(
+            name=<span class="str">"Urgent — account locked"</span>,
+            input=<span class="str">"My account is locked, this is urgent."</span>,
+            actual_output=agent.<span class="fn">run</span>(<span class="str">"My account is locked, this is urgent."</span>),
+            expected_tools=[<span class="str">"create_ticket"</span>],
             forbidden_tools=[<span class="str">"send_email"</span>],
             tool_calls=agent.tool_calls,
             trace=agent.trace,
-            latency_ms=<span class="num">1240</span>,
-            cost_usd=<span class="num">0.004</span>,
-        )
+            latency_ms=agent.latency_ms,
+        ),
     ],
     metrics=[
-        rubric.<span class="cls">ToolCallAccuracy</span>(check_order=<span class="kw">True</span>),
-        rubric.<span class="cls">ToolCallEfficiency</span>(),
+        rubric.<span class="cls">ToolCallAccuracy</span>(check_order=<span class="kw">False</span>),
         rubric.<span class="cls">TraceQuality</span>(penalize_loops=<span class="kw">True</span>),
-        rubric.<span class="cls">SafetyCompliance</span>(),
-        rubric.<span class="cls">ReasoningQuality</span>(),
-        rubric.<span class="cls">ContextUtilization</span>(),
-        rubric.<span class="cls">LatencyMetric</span>(max_ms=<span class="num">5000</span>),
-        rubric.<span class="cls">CostMetric</span>(max_cost_usd=<span class="num">0.01</span>),
+        rubric.<span class="cls">TaskCompletion</span>(),
+        rubric.<span class="cls">LatencyMetric</span>(max_ms=<span class="num">3000</span>),
     ],
-    output_html=<span class="str">"agent_report.html"</span>,
-)
-
-results.<span class="fn">print_summary</span>()</pre>
+    output_html=<span class="str">"report.html"</span>,
+)</pre>
       </div>
     </div>
   </div>

@@ -50,62 +50,62 @@ pip install "rubric-eval[all]"        # Everything
 ```python
 import rubriceval as rubric
 
-# Replace this with your real LLM call
-def my_llm(prompt: str) -> str:
-    responses = {
-        "What is the capital of France?": "The capital of France is Paris.",
-        "What is 2 + 2?": "4",
-    }
-    return responses.get(prompt, "I don't know.")
+# Replace with your real LLM call — OpenAI, Anthropic, LangChain, any callable
+def call_llm(prompt: str) -> str: ...
 
-# 1. Define test cases
-test_cases = [
-    rubric.TestCase(
-        input="What is the capital of France?",
-        actual_output=my_llm("What is the capital of France?"),
-        expected_output="Paris",
-    ),
-    rubric.TestCase(
-        input="What is 2 + 2?",
-        actual_output=my_llm("What is 2 + 2?"),
-        expected_output="4",
-    ),
-]
-
-# 2. Run evaluation
+# Attach per-test metrics directly on the TestCase.
+# Shared metrics (e.g. safety checks) go on evaluate() and apply to all.
 report = rubric.evaluate(
-    test_cases=test_cases,
-    metrics=[
-        rubric.Contains("Paris"),   # LLMs return prose — use Contains, not ExactMatch
-        rubric.ExactMatch(),        # Good for single-token answers like "4"
-        rubric.NotContains(["I don't know", "I'm not sure"]),
+    test_cases=[
+        rubric.TestCase(
+            name="Pricing inquiry",
+            input="What are the pricing plans?",
+            actual_output=call_llm("What are the pricing plans?"),
+            metrics=[rubric.Contains(["$29", "$99", "trial"])],
+        ),
+        rubric.TestCase(
+            name="Cancellation flow",
+            input="How do I cancel my subscription?",
+            actual_output=call_llm("How do I cancel my subscription?"),
+            metrics=[rubric.Contains(["Settings", "Billing", "export"])],
+        ),
+        rubric.TestCase(
+            name="Data retention",
+            input="What happens to my data if I cancel?",
+            actual_output=call_llm("What happens to my data if I cancel?"),
+            metrics=[rubric.Contains(["30 days", "deleted"])],
+        ),
     ],
-    output_html="report.html",  # local HTML dashboard
-    output_json="report.json",  # for CI/CD
+    # Shared metric — runs on every test case
+    metrics=[rubric.NotContains(["I don't know", "I'm not sure"])],
+    output_html="report.html",
 )
 ```
 
 **Output:**
 ```
-🔍 Rubric — Running 2 test case(s) with 3 metric(s)...
+🔍 Rubric — Running 3 test case(s) with 1 metric(s)...
 
-  [1/2] What is the capital of France?
+  [1/3] Pricing inquiry
     ✅ Score: 1.000
-        ✓ contains: 1.000 — Found all required substrings.
-        ✓ exact_match: 1.000 — Output matches expected.
         ✓ not_contains: 1.000 — No forbidden strings found.
+        ✓ contains: 1.000 — Found all required substrings.
 
-  [2/2] What is 2 + 2?
+  [2/3] Cancellation flow
     ✅ Score: 1.000
-        ✓ contains: 1.000 — Found all required substrings.
-        ✓ exact_match: 1.000 — Output matches expected.
         ✓ not_contains: 1.000 — No forbidden strings found.
+        ✓ contains: 1.000 — Found all required substrings.
+
+  [3/3] Data retention
+    ✅ Score: 1.000
+        ✓ not_contains: 1.000 — No forbidden strings found.
+        ✓ contains: 1.000 — Found all required substrings.
 
 ============================================================
   RUBRIC EVALUATION REPORT
 ============================================================
-  Total:     2
-  ✅ Passed:  2
+  Total:     3
+  ✅ Passed:  3
   ❌ Failed:  0
   Pass Rate: 100.0%
   Avg Score: 1.000
@@ -121,38 +121,36 @@ Unlike other frameworks that only check final output, Rubric evaluates the **ent
 ```python
 import rubriceval as rubric
 
-# Your agent returns tool calls and a trace
-result = my_agent.run("Book a flight from Cairo to Paris")
-
-test = rubric.AgentTestCase(
-    input="Book a flight from Cairo to Paris",
-    actual_output=result.output,
-
-    # Which tools MUST be called?
-    expected_tools=["search_flights", "book_flight"],
-
-    # Which tools must NOT be called? (safety guardrails)
-    forbidden_tools=["send_email", "charge_card"],
-
-    # Pass the actual tool calls your agent made
-    tool_calls=result.tool_calls,
-
-    # Pass the full reasoning trace
-    trace=result.trace,
-
-    latency_ms=result.latency_ms,
-    max_steps=10,  # agent should complete in ≤ 10 steps
-)
-
+# Run your agent on each scenario and pass what it actually did
 report = rubric.evaluate(
-    test_cases=[test],
-    metrics=[
-        rubric.ToolCallAccuracy(check_order=True),  # Did it call the right tools?
-        rubric.TraceQuality(penalize_loops=True),   # Did it avoid looping?
-        rubric.TaskCompletion(),                     # Did it actually finish?
-        rubric.LatencyMetric(max_ms=5000),           # Was it fast enough?
-        rubric.CostMetric(max_cost_usd=0.05),        # Was it cheap enough?
+    test_cases=[
+        rubric.AgentTestCase(
+            name="Order inquiry",
+            input="Where is my order #ORD-9821?",
+            actual_output=agent.run("Where is my order #ORD-9821?"),
+            expected_tools=["lookup_order", "create_ticket"],
+            tool_calls=agent.tool_calls,  # what it actually called
+            trace=agent.trace,            # full reasoning trace
+            latency_ms=agent.latency_ms,
+        ),
+        rubric.AgentTestCase(
+            name="Urgent — account locked",
+            input="My account is locked, this is urgent.",
+            actual_output=agent.run("My account is locked, this is urgent."),
+            expected_tools=["create_ticket"],
+            forbidden_tools=["send_email"],  # must NOT bypass the ticketing system
+            tool_calls=agent.tool_calls,
+            trace=agent.trace,
+            latency_ms=agent.latency_ms,
+        ),
     ],
+    metrics=[
+        rubric.ToolCallAccuracy(check_order=False),  # right tools called?
+        rubric.TraceQuality(penalize_loops=True),    # clean reasoning?
+        rubric.TaskCompletion(),                      # task actually finished?
+        rubric.LatencyMetric(max_ms=3000),            # within latency budget?
+    ],
+    output_html="report.html",
 )
 ```
 
