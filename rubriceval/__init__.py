@@ -65,6 +65,9 @@ from rubriceval.metrics.advanced_agent import (
 # Base for custom metrics
 from rubriceval.metrics.base import BaseMetric
 
+# Capture — decorator and context manager for recording LLM calls
+from rubriceval.capture import capture, track, get_session, reset_session
+
 __all__ = [
     # Core
     "evaluate",
@@ -101,4 +104,9 @@ __all__ = [
     "ContextUtilization",
     # Base
     "BaseMetric",
+    # Capture
+    "capture",
+    "track",
+    "get_session",
+    "reset_session",
 ]
