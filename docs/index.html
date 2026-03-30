@@ -690,6 +690,7 @@
   <div class="strip-item">&#8212; <strong>First-class</strong>&nbsp;agent trace eval</div>
   <div class="strip-item">&#8212; Works with <strong>any</strong>&nbsp;LLM</div>
   <div class="strip-item">&#8212; <strong>Local</strong>&nbsp;HTML reports</div>
+  <div class="strip-item">&#8212; Import from <strong>LangFuse</strong>&nbsp;&amp;&nbsp;<strong>LangSmith</strong></div>
 </div>
 
 <!-- Features -->
@@ -736,6 +737,18 @@
       <span class="feature-num">06</span>
       <h3>Truly Independent</h3>
       <p>MIT licensed. Not a product of OpenAI, Anthropic, Google, or any model provider. Rubric will never have a financial incentive to favor one model over another. Evaluate any model with the same unbiased framework &mdash; that's the whole point.</p>
+    </div>
+
+    <div class="feature-card">
+      <span class="feature-num">07</span>
+      <h3>Zero-Friction Capture</h3>
+      <p>Use <code>rubric.capture()</code> as a context manager or <code>@rubric.track</code> as a decorator to record every LLM call automatically &mdash; no manual <code>TestCase</code> construction needed. Captures input, output, latency, and context in one shot, then evaluate the whole session with a single call.</p>
+    </div>
+
+    <div class="feature-card">
+      <span class="feature-num">08</span>
+      <h3>Import from LangFuse &amp; LangSmith</h3>
+      <p>Already using an observability platform? Import your existing traces directly into Rubric and run evals without touching your app. <code>load_langfuse("traces.json")</code> and <code>load_langsmith("runs.json")</code> convert exported traces into <code>TestCase</code> / <code>AgentTestCase</code> objects ready for evaluation.</p>
     </div>
 
   </div>
@@ -812,8 +825,8 @@
     <div class="unique-card">
       <div class="unique-card-top">
         <div class="unique-card-tag" style="color: var(--slate);">RAG</div>
-        <div class="unique-card-title">Context Utilization</div>
-        <div class="unique-card-sub">For RAG pipelines: verify the agent actually used what it retrieved, rather than ignoring context and hallucinating.</div>
+        <div class="unique-card-title">Context Utilization &amp; Hallucination Detection</div>
+        <div class="unique-card-sub">For RAG pipelines: verify the agent actually used what it retrieved, and catch claims that aren't grounded in the source context.</div>
       </div>
       <div class="unique-card-checks">
         <div class="check-item">
@@ -822,7 +835,7 @@
         </div>
         <div class="check-item">
           <span class="check-dot" style="background:var(--slate)"></span>
-          <span>Works on any RAG architecture &mdash; pass the retrieved context as trace steps in your <code>AgentTestCase</code> and Rubric handles the rest.</span>
+          <span><strong>HallucinationScore</strong> &mdash; measures faithfulness of the output to the provided context. Two modes: LLM judge (returns a list of hallucinated claims) or local NLI model (no API key required). Score of 1.0 = fully grounded; 0.0 = fully hallucinated.</span>
         </div>
       </div>
     </div>
@@ -892,6 +905,71 @@ results = rubric.<span class="fn">evaluate</span>(
       </div>
     </div>
     <div>
+      <div class="code-block">
+        <div class="code-block-header">
+          <div class="code-dot" style="background:#ff5f57"></div>
+          <div class="code-dot" style="background:#febc2e"></div>
+          <div class="code-dot" style="background:#28c840"></div>
+          <span class="code-block-title">capture.py &mdash; zero-friction recording</span>
+        </div>
+        <pre><span class="kw">import</span> rubriceval <span class="kw">as</span> rubric
+
+<span class="cmt"># Option A: context manager — explicit recording</span>
+<span class="kw">with</span> rubric.<span class="fn">capture</span>() <span class="kw">as</span> session:
+    answer = <span class="fn">my_llm</span>(<span class="str">"Where is the Eiffel Tower?"</span>)
+    session.<span class="fn">record</span>(
+        input=<span class="str">"Where is the Eiffel Tower?"</span>,
+        actual_output=answer,
+        context=<span class="str">"The Eiffel Tower is in Paris, built in 1889."</span>,
+    )
+
+report = session.<span class="fn">evaluate</span>(metrics=[
+    rubric.<span class="cls">HallucinationScore</span>(judge_fn=my_judge),
+])
+
+<span class="cmt"># Option B: decorator — capture every call automatically</span>
+<span class="kw">@</span>rubric.<span class="fn">track</span>
+<span class="kw">def</span> <span class="fn">ask</span>(prompt, context=<span class="kw">None</span>):
+    <span class="kw">return</span> <span class="fn">my_llm</span>(prompt)
+
+<span class="fn">ask</span>(<span class="str">"Who wrote Hamlet?"</span>)
+<span class="fn">ask</span>(<span class="str">"What is the capital of Egypt?"</span>)
+
+report = rubric.<span class="fn">get_session</span>().<span class="fn">evaluate</span>(
+    metrics=[rubric.<span class="cls">Contains</span>(<span class="str">"Cairo"</span>)]
+)
+rubric.<span class="fn">reset_session</span>()</pre>
+      </div>
+      <div class="code-block">
+        <div class="code-block-header">
+          <div class="code-dot" style="background:#ff5f57"></div>
+          <div class="code-dot" style="background:#febc2e"></div>
+          <div class="code-dot" style="background:#28c840"></div>
+          <span class="code-block-title">importers.py &mdash; LangFuse &amp; LangSmith</span>
+        </div>
+        <pre><span class="kw">from</span> rubriceval.integrations.loaders <span class="kw">import</span> (
+    load_langfuse, load_langsmith
+)
+<span class="kw">import</span> rubriceval <span class="kw">as</span> rubric
+
+<span class="cmt"># Export traces from LangFuse UI → Traces → Export JSON</span>
+test_cases = <span class="fn">load_langfuse</span>(<span class="str">"langfuse_export.json"</span>)
+
+<span class="cmt"># Or from LangSmith: Project → Runs → Export JSON</span>
+test_cases = <span class="fn">load_langsmith</span>(<span class="str">"langsmith_runs.json"</span>)
+
+<span class="cmt"># Run evals on your existing production traces</span>
+report = rubric.<span class="fn">evaluate</span>(
+    test_cases=test_cases,
+    metrics=[
+        rubric.<span class="cls">HallucinationScore</span>(judge_fn=my_judge),
+        rubric.<span class="cls">ToolCallAccuracy</span>(),
+        rubric.<span class="cls">LatencyMetric</span>(max_ms=<span class="num">5000</span>),
+    ],
+    output_html=<span class="str">"trace_report.html"</span>,
+)
+report.<span class="fn">print_summary</span>()</pre>
+      </div>
       <div class="code-block">
         <div class="code-block-header">
           <div class="code-dot" style="background:#ff5f57"></div>
@@ -971,7 +1049,7 @@ results.<span class="fn">print_summary</span>()</pre>
 <!-- All Metrics -->
 <div class="wrap" id="metrics" style="padding-top: 0;">
   <div class="section-label">Metrics Library</div>
-  <h2>15 metrics across 4 categories.</h2>
+  <h2>16 metrics across 4 categories.</h2>
   <p class="section-sub">
     Mix and match. Extend with your own by subclassing <code style="font-family:'SF Mono','Fira Code',monospace;font-size:0.82rem;background:var(--surface3);padding:1px 6px;border-radius:4px;color:var(--blue)">BaseMetric</code>.
   </p>
@@ -1024,6 +1102,10 @@ results.<span class="fn">print_summary</span>()</pre>
       <div class="metric-item">
         <div class="metric-item-name"><span class="metric-dot" style="background:#94a3b8"></span>GEval</div>
         <div class="metric-item-desc">Chain-of-thought evaluation: the LLM reasons step-by-step before assigning a score. More accurate than single-pass judging for nuanced criteria like coherence or factual accuracy.</div>
+      </div>
+      <div class="metric-item">
+        <div class="metric-item-name"><span class="metric-dot" style="background:#94a3b8"></span>HallucinationScore</div>
+        <div class="metric-item-desc">Measures faithfulness of the output to a provided context. Two modes: LLM judge (explains which specific claims are hallucinated) or local NLI model via <code>transformers</code> (no API key). Requires <code>test_case.context</code>.</div>
       </div>
     </div>
 
