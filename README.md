@@ -8,7 +8,7 @@
 [![PyPI version](https://badge.fury.io/py/rubric-eval.svg)](https://badge.fury.io/py/rubric-eval)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![GitHub Stars](https://img.shields.io/github/stars/kareemrashed/rubric-eval?style=social)](https://github.com/kareem-rashed/rubric-eval)
+[![GitHub Stars](https://img.shields.io/github/stars/kareem-rashed/rubric-eval?style=social)](https://github.com/kareem-rashed/rubric-eval)
 
 > **Not owned by any AI company. Open source forever.**
 >
