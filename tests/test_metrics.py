@@ -314,6 +314,118 @@ def test_geval_calls_judge_once():
     assert judge.call_count == 1
 
 
+# ── Flakiness detection ───────────────────────────────────────────────────────
+
+def _varying_judge(scores: list):
+    """Returns a judge mock that returns each score in sequence."""
+    import json
+    from unittest.mock import MagicMock
+    responses = [json.dumps({"score": s, "passed": s >= 0.7, "reason": f"run score {s}"}) for s in scores]
+    mock = MagicMock(side_effect=responses)
+    return mock
+
+
+def test_llmjudge_single_run_no_flakiness():
+    judge = _mock_judge(0.8, True)
+    metric = rubric.LLMJudge(criteria="Is it good?", judge_fn=judge, threshold=0.7, num_runs=1)
+    result = metric.measure(make_test(actual="good answer"))
+    assert result.flakiness is None
+    assert not result.is_flaky
+    assert judge.call_count == 1
+
+
+def test_llmjudge_multi_run_calls_judge_n_times():
+    judge = _varying_judge([0.8, 0.85, 0.75])
+    metric = rubric.LLMJudge(criteria="Is it good?", judge_fn=judge, threshold=0.7, num_runs=3)
+    result = metric.measure(make_test(actual="good answer"))
+    assert judge.call_count == 3
+    assert result.flakiness is not None
+    assert result.metadata["num_runs"] == 3
+    assert len(result.metadata["all_scores"]) == 3
+
+
+def test_llmjudge_multi_run_mean_score():
+    judge = _varying_judge([0.6, 0.8, 1.0])
+    metric = rubric.LLMJudge(criteria="any", judge_fn=judge, threshold=0.7, num_runs=3)
+    result = metric.measure(make_test(actual="answer"))
+    assert result.score == pytest.approx(0.8, abs=1e-3)
+
+
+def test_llmjudge_not_flaky_when_consistent():
+    # std_dev ≈ 0.0 — well below any threshold
+    judge = _varying_judge([0.8, 0.8, 0.8])
+    metric = rubric.LLMJudge(criteria="any", judge_fn=judge, threshold=0.7, num_runs=3, flakiness_threshold=0.15)
+    result = metric.measure(make_test(actual="answer"))
+    assert result.flakiness == pytest.approx(0.0, abs=1e-3)
+    assert not result.is_flaky
+    assert "⚡" not in (result.reason or "")
+
+
+def test_llmjudge_flaky_when_high_variance():
+    # std_dev of [0.0, 1.0, 0.0] = 0.471 — well above 0.15
+    judge = _varying_judge([0.0, 1.0, 0.0])
+    metric = rubric.LLMJudge(criteria="any", judge_fn=judge, threshold=0.7, num_runs=3, flakiness_threshold=0.15)
+    result = metric.measure(make_test(actual="answer"))
+    assert result.is_flaky
+    assert result.flakiness > 0.15
+    assert "⚡ flaky" in result.reason
+
+
+def test_llmjudge_flaky_flag_in_metadata():
+    judge = _varying_judge([0.0, 1.0, 0.5])
+    metric = rubric.LLMJudge(criteria="any", judge_fn=judge, threshold=0.7, num_runs=3, flakiness_threshold=0.15)
+    result = metric.measure(make_test(actual="answer"))
+    assert result.metadata["flaky"] is True
+    assert result.metadata["flakiness_threshold"] == 0.15
+    assert "all_scores" in result.metadata
+    assert "all_reasons" in result.metadata
+
+
+def test_llmjudge_pass_based_on_mean():
+    # mean=0.75 >= threshold=0.7 → passed; mean=0.65 < 0.7 → failed
+    judge_pass = _varying_judge([0.7, 0.8])
+    metric = rubric.LLMJudge(criteria="any", judge_fn=judge_pass, threshold=0.7, num_runs=2)
+    assert metric.measure(make_test(actual="x")).passed
+
+    judge_fail = _varying_judge([0.6, 0.7])
+    metric2 = rubric.LLMJudge(criteria="any", judge_fn=judge_fail, threshold=0.7, num_runs=2)
+    assert not metric2.measure(make_test(actual="x")).passed
+
+
+def test_geval_multi_run_flakiness():
+    judge = _varying_judge([0.2, 0.9, 0.2])
+    metric = rubric.GEval(name="coherence", criteria="Is it coherent?", judge_fn=judge, threshold=0.7, num_runs=3, flakiness_threshold=0.15)
+    result = metric.measure(make_test(actual="response"))
+    assert judge.call_count == 3
+    assert result.is_flaky
+    assert result.flakiness > 0.15
+    assert result.metadata["flaky"] is True
+
+
+def test_geval_multi_run_consistent():
+    judge = _varying_judge([0.9, 0.85, 0.88])
+    metric = rubric.GEval(name="quality", criteria="Is it quality?", judge_fn=judge, threshold=0.7, num_runs=3, flakiness_threshold=0.15)
+    result = metric.measure(make_test(actual="great answer"))
+    assert not result.is_flaky
+    assert result.passed
+
+
+def test_metric_result_repr_shows_flaky():
+    result = rubric.MetricResult(
+        metric_name="llm_judge",
+        score=0.5,
+        passed=False,
+        flakiness=0.3,
+        metadata={"flaky": True},
+    )
+    assert "⚡ flaky" in repr(result)
+
+
+def test_metric_result_repr_no_flaky_when_not_set():
+    result = rubric.MetricResult(metric_name="llm_judge", score=0.8, passed=True)
+    assert "⚡" not in repr(result)
+
+
 # ── HallucinationScore ────────────────────────────────────────────────────────
 
 def _make_hallucination_judge(score: float, passed: bool, reason: str = "ok", claims: list = None):

@@ -6,6 +6,7 @@ Model-agnostic: works with OpenAI, Anthropic, Ollama, or any callable.
 from __future__ import annotations
 
 import json
+import math
 import re
 from typing import Any, Callable, Optional, Union
 
@@ -99,6 +100,8 @@ class LLMJudge(BaseMetric):
         model: str = "gpt-4o-mini",
         include_expected: bool = True,
         system_prompt: str = _DEFAULT_SYSTEM_PROMPT,
+        num_runs: int = 1,
+        flakiness_threshold: float = 0.15,
     ):
         self.criteria = criteria
         self.judge_fn = judge_fn
@@ -106,6 +109,8 @@ class LLMJudge(BaseMetric):
         self.model = model
         self.include_expected = include_expected
         self.system_prompt = system_prompt
+        self.num_runs = max(1, num_runs)
+        self.flakiness_threshold = flakiness_threshold
         self._auto_client = None
 
     def _get_auto_judge(self) -> Callable[[str], str]:
@@ -187,24 +192,80 @@ class LLMJudge(BaseMetric):
 
         raise ValueError(f"Could not parse JSON from LLM response: {response[:200]}")
 
+    def _run_once(self, judge: Callable[[str], str], prompt: str) -> tuple[float, str]:
+        """Call the judge once and return (score, reason)."""
+        response = judge(prompt)
+        parsed = self._parse_response(response)
+        score = float(parsed.get("score", 0.0))
+        score = max(0.0, min(1.0, score))
+        reason = parsed.get("reason", "")
+        return score, reason
+
     def measure(self, test_case: Union[TestCase, AgentTestCase]) -> MetricResult:
         try:
             judge = self.judge_fn or self._get_auto_judge()
             prompt = self._build_prompt(test_case)
-            response = judge(prompt)
-            parsed = self._parse_response(response)
 
-            score = float(parsed.get("score", 0.0))
-            score = max(0.0, min(1.0, score))
-            passed = bool(parsed.get("passed", score >= self.threshold))
-            reason = parsed.get("reason", "")
+            if self.num_runs == 1:
+                score, reason = self._run_once(judge, prompt)
+                passed = score >= self.threshold
+                return MetricResult(
+                    metric_name=self.name,
+                    score=score,
+                    passed=passed,
+                    reason=reason,
+                    metadata={"criteria": self.criteria},
+                )
+
+            # Multi-run: collect scores and detect flakiness
+            scores: list[float] = []
+            reasons: list[str] = []
+            errors: list[str] = []
+
+            for _ in range(self.num_runs):
+                try:
+                    s, r = self._run_once(judge, prompt)
+                    scores.append(s)
+                    reasons.append(r)
+                except Exception as e:
+                    errors.append(str(e))
+
+            if not scores:
+                return MetricResult(
+                    metric_name=self.name,
+                    score=0.0,
+                    passed=False,
+                    reason=f"All {self.num_runs} runs failed: {'; '.join(errors)}",
+                )
+
+            mean_score = sum(scores) / len(scores)
+            variance = sum((s - mean_score) ** 2 for s in scores) / len(scores)
+            std_dev = math.sqrt(variance)
+            flaky = std_dev > self.flakiness_threshold
+
+            # Pick the reason from the run whose score is closest to the mean
+            closest_idx = min(range(len(scores)), key=lambda i: abs(scores[i] - mean_score))
+            reason = reasons[closest_idx]
+            if flaky:
+                reason = f"[⚡ flaky: std_dev={std_dev:.3f} over {len(scores)} runs] {reason}"
+            if errors:
+                reason += f" ({len(errors)} run(s) errored)"
 
             return MetricResult(
                 metric_name=self.name,
-                score=score,
-                passed=passed,
+                score=round(mean_score, 4),
+                passed=mean_score >= self.threshold,
                 reason=reason,
-                metadata={"criteria": self.criteria, "raw_response": response},
+                flakiness=round(std_dev, 4),
+                metadata={
+                    "criteria": self.criteria,
+                    "num_runs": self.num_runs,
+                    "all_scores": scores,
+                    "all_reasons": reasons,
+                    "flaky": flaky,
+                    "flakiness_threshold": self.flakiness_threshold,
+                    "run_errors": errors,
+                },
             )
 
         except Exception as e:
@@ -254,18 +315,28 @@ Finally, respond ONLY with JSON:
         criteria: str,
         judge_fn: Optional[Callable[[str], str]] = None,
         threshold: float = 0.7,
+        num_runs: int = 1,
+        flakiness_threshold: float = 0.15,
     ):
         self.name = name
         self.criteria = criteria
         self.judge_fn = judge_fn
         self.threshold = threshold
+        self.num_runs = max(1, num_runs)
+        self.flakiness_threshold = flakiness_threshold
         self._llm_judge = LLMJudge(
             criteria=criteria,
             judge_fn=judge_fn,
             threshold=threshold,
         )
-        # Override the prompt with G-Eval chain-of-thought prompt
-        self._llm_judge._geval_mode = True
+
+    def _run_once(self, judge: Callable[[str], str], prompt: str) -> tuple[float, str]:
+        response = judge(prompt)
+        parsed = self._llm_judge._parse_response(response)
+        score = float(parsed.get("score", 0.0))
+        score = max(0.0, min(1.0, score))
+        reason = parsed.get("reason", "")
+        return score, reason
 
     def measure(self, test_case: Union[TestCase, AgentTestCase]) -> MetricResult:
         try:
@@ -275,20 +346,65 @@ Finally, respond ONLY with JSON:
                 input=test_case.input,
                 actual_output=test_case.actual_output,
             )
-            response = judge(prompt)
-            parsed = self._llm_judge._parse_response(response)
 
-            score = float(parsed.get("score", 0.0))
-            score = max(0.0, min(1.0, score))
-            passed = bool(parsed.get("passed", score >= self.threshold))
-            reason = parsed.get("reason", "")
+            if self.num_runs == 1:
+                score, reason = self._run_once(judge, prompt)
+                return MetricResult(
+                    metric_name=self.name,
+                    score=score,
+                    passed=score >= self.threshold,
+                    reason=reason,
+                )
+
+            # Multi-run: collect scores and detect flakiness
+            scores: list[float] = []
+            reasons: list[str] = []
+            errors: list[str] = []
+
+            for _ in range(self.num_runs):
+                try:
+                    s, r = self._run_once(judge, prompt)
+                    scores.append(s)
+                    reasons.append(r)
+                except Exception as e:
+                    errors.append(str(e))
+
+            if not scores:
+                return MetricResult(
+                    metric_name=self.name,
+                    score=0.0,
+                    passed=False,
+                    reason=f"All {self.num_runs} runs failed: {'; '.join(errors)}",
+                )
+
+            mean_score = sum(scores) / len(scores)
+            variance = sum((s - mean_score) ** 2 for s in scores) / len(scores)
+            std_dev = math.sqrt(variance)
+            flaky = std_dev > self.flakiness_threshold
+
+            closest_idx = min(range(len(scores)), key=lambda i: abs(scores[i] - mean_score))
+            reason = reasons[closest_idx]
+            if flaky:
+                reason = f"[⚡ flaky: std_dev={std_dev:.3f} over {len(scores)} runs] {reason}"
+            if errors:
+                reason += f" ({len(errors)} run(s) errored)"
 
             return MetricResult(
                 metric_name=self.name,
-                score=score,
-                passed=passed,
+                score=round(mean_score, 4),
+                passed=mean_score >= self.threshold,
                 reason=reason,
+                flakiness=round(std_dev, 4),
+                metadata={
+                    "num_runs": self.num_runs,
+                    "all_scores": scores,
+                    "all_reasons": reasons,
+                    "flaky": flaky,
+                    "flakiness_threshold": self.flakiness_threshold,
+                    "run_errors": errors,
+                },
             )
+
         except Exception as e:
             return MetricResult(
                 metric_name=self.name,

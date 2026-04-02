@@ -22,12 +22,19 @@ class MetricResult:
     reason: Optional[str] = None
     metadata: dict[str, Any] = field(default_factory=dict)
     skipped: bool = False  # True when a required dependency is not installed
+    flakiness: Optional[float] = None  # Std dev of scores across runs; None when num_runs=1
+
+    @property
+    def is_flaky(self) -> bool:
+        """True when flakiness (std dev) exceeds the metric's flakiness_threshold."""
+        return self.flakiness is not None and self.metadata.get("flaky", False)
 
     def __repr__(self) -> str:
         if self.skipped:
             return f"⚠️  {self.metric_name}: skipped"
         status = "✅" if self.passed else "❌"
-        return f"{status} {self.metric_name}: {self.score:.2f}"
+        flaky = " ⚡ flaky" if self.is_flaky else ""
+        return f"{status} {self.metric_name}: {self.score:.2f}{flaky}"
 
 
 @dataclass
@@ -82,6 +89,8 @@ class TestResult:
                     "passed": r.passed,
                     "skipped": r.skipped,
                     "reason": r.reason,
+                    "flakiness": round(r.flakiness, 4) if r.flakiness is not None else None,
+                    "flaky": r.is_flaky,
                     "metadata": r.metadata,
                 }
                 for r in self.metric_results
@@ -186,13 +195,17 @@ class EvalReport:
         for name, mresults in metric_data.items():
             active = [r for r in mresults if not r.skipped]
             if not active:
-                summary[name] = {"pass_rate": None, "avg_score": None, "total": 0, "skipped": len(mresults)}
+                summary[name] = {"pass_rate": None, "avg_score": None, "total": 0, "skipped": len(mresults), "flaky_count": 0, "avg_flakiness": None}
             else:
+                flaky = [r for r in active if r.is_flaky]
+                flakiness_values = [r.flakiness for r in active if r.flakiness is not None]
                 summary[name] = {
                     "pass_rate": sum(1 for r in active if r.passed) / len(active),
                     "avg_score": sum(r.score for r in active) / len(active),
                     "total": len(active),
                     "skipped": len(mresults) - len(active),
+                    "flaky_count": len(flaky),
+                    "avg_flakiness": sum(flakiness_values) / len(flakiness_values) if flakiness_values else None,
                 }
         return summary
 
@@ -245,10 +258,21 @@ class EvalReport:
                     print(f"    {metric_name:<30}   ⚠️  skipped — {reason}")
                 else:
                     bar = "█" * int(stats["pass_rate"] * 20)
+                    flaky_note = f"  ⚡ {stats['flaky_count']} flaky" if stats["flaky_count"] > 0 else ""
                     print(
-                        f"    {metric_name:<30} {stats['pass_rate']*100:5.1f}%  {bar}"
+                        f"    {metric_name:<30} {stats['pass_rate']*100:5.1f}%  {bar}{flaky_note}"
                     )
         print()
+
+        # Flaky metric details
+        flaky_metrics = {name: stats for name, stats in ms.items() if stats.get("flaky_count", 0) > 0}
+        if flaky_metrics:
+            print("  ⚡ Flaky Metrics (high score variance across runs):")
+            for metric_name, stats in flaky_metrics.items():
+                avg_f = stats["avg_flakiness"]
+                avg_f_str = f"avg std_dev={avg_f:.3f}" if avg_f is not None else ""
+                print(f"    {metric_name:<30} {stats['flaky_count']} case(s)  {avg_f_str}")
+            print()
 
         failures = [r for r in self.results if not r.passed]
         if failures:
