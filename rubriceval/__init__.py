@@ -24,7 +24,7 @@ Quick start:
     results.print_summary()
 """
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 __author__ = "Kareem Rashed"
 __license__ = "MIT"
 
@@ -71,6 +71,14 @@ from rubriceval.capture import capture, track, get_session, reset_session
 # Loaders — import traces from LangFuse and LangSmith
 from rubriceval.integrations.loaders import load_langfuse, load_langsmith
 
+# LangGraph / LangChain — auto-capture agent runs into AgentTestCases
+from rubriceval.integrations.langgraph import (
+    AgentScenario,
+    from_langgraph,
+    from_messages,
+    run_langgraph,
+)
+
 __all__ = [
     # Core
     "evaluate",
@@ -115,4 +123,9 @@ __all__ = [
     # Loaders
     "load_langfuse",
     "load_langsmith",
+    # LangGraph / LangChain auto-capture
+    "AgentScenario",
+    "from_langgraph",
+    "from_messages",
+    "run_langgraph",
 ]
