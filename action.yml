@@ -1,0 +1,108 @@
+name: "Rubric Eval"
+description: >-
+  Run LLM & agent evals with Rubric, compare against a baseline, and post a
+  regression diff as a PR comment. Codecov for agent behavior.
+author: "Kareem Rashed"
+branding:
+  icon: "check-circle"
+  color: "orange"
+
+inputs:
+  eval-file:
+    description: "Python eval file to run (e.g. evals/regression.py)"
+    required: true
+  baseline:
+    description: "Path to the baseline report JSON committed in the repo"
+    required: false
+    default: "evals/baseline.json"
+  python-version:
+    description: "Python version to set up"
+    required: false
+    default: "3.11"
+  install:
+    description: "Install command (override to add your project's dependencies)"
+    required: false
+    default: "pip install rubric-eval"
+  comment:
+    description: "Post/update the regression diff as a PR comment"
+    required: false
+    default: "true"
+  fail-on-regression:
+    description: "Fail the job if any baseline-passing test now fails"
+    required: false
+    default: "true"
+  score-drop-threshold:
+    description: "Flag passing tests whose score dropped more than this"
+    required: false
+    default: "0.1"
+  github-token:
+    description: "Token used to post the PR comment"
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  report:
+    description: "Path to the current run's JSON report"
+    value: ${{ steps.paths.outputs.report }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install Rubric
+      shell: bash
+      run: ${{ inputs.install }}
+
+    - name: Prepare output paths
+      id: paths
+      shell: bash
+      run: |
+        mkdir -p .rubric
+        echo "report=.rubric/current.json" >> "$GITHUB_OUTPUT"
+
+    - name: Run evals
+      shell: bash
+      run: rubric run "${{ inputs.eval-file }}" --output-json .rubric/current.json --quiet
+
+    - name: Compare against baseline
+      shell: bash
+      run: |
+        rubric compare .rubric/current.json \
+          --baseline "${{ inputs.baseline }}" \
+          --score-drop-threshold "${{ inputs.score-drop-threshold }}" \
+          --output-md .rubric/comment.md
+
+    - name: Post PR comment
+      if: ${{ inputs.comment == 'true' && github.event_name == 'pull_request' }}
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        REPO: ${{ github.repository }}
+      run: |
+        # Update the existing Rubric comment if there is one, else create it.
+        MARKER='<!-- rubric-eval-report -->'
+        COMMENT_ID=$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate \
+          --jq ".[] | select(.body | startswith(\"$MARKER\")) | .id" | head -n1)
+        if [ -n "$COMMENT_ID" ]; then
+          gh api -X PATCH "repos/$REPO/issues/comments/$COMMENT_ID" \
+            -F body=@.rubric/comment.md > /dev/null
+          echo "Updated existing Rubric comment ($COMMENT_ID)."
+        else
+          gh api -X POST "repos/$REPO/issues/$PR_NUMBER/comments" \
+            -F body=@.rubric/comment.md > /dev/null
+          echo "Posted Rubric comment."
+        fi
+
+    - name: Fail on regression
+      if: ${{ inputs.fail-on-regression == 'true' }}
+      shell: bash
+      run: |
+        rubric compare .rubric/current.json \
+          --baseline "${{ inputs.baseline }}" \
+          --score-drop-threshold "${{ inputs.score-drop-threshold }}" \
+          --fail-on-regression --quiet
