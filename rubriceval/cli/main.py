@@ -5,6 +5,7 @@ Usage:
     rubric run examples/basic_eval.py
     rubric run examples/basic_eval.py --output-html report.html
     rubric run examples/basic_eval.py --output-json report.json
+    rubric compare report.json --baseline evals/baseline.json
     rubric version
 """
 
@@ -19,13 +20,14 @@ import os
 def main():
     parser = argparse.ArgumentParser(
         prog="rubric",
-        description=" Rubric — The independent LLM evaluation framework",
+        description=" Rubric — Agent behavior testing for LLM apps",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
   rubric run my_evals.py
   rubric run my_evals.py --output-html report.html
   rubric run my_evals.py --output-json report.json --verbose
+  rubric compare report.json --baseline evals/baseline.json --fail-on-regression
 
 Docs: https://github.com/kareem-rashed/rubric-eval
         """,
@@ -49,6 +51,34 @@ Docs: https://github.com/kareem-rashed/rubric-eval
         "--fail-on-error", action="store_true", help="Exit with code 1 if any test fails"
     )
 
+    # rubric compare
+    compare_parser = subparsers.add_parser(
+        "compare", help="Diff a current report against a baseline (regression detection)"
+    )
+    compare_parser.add_argument(
+        "current", help="Path to the current JSON report (from rubric run --output-json)"
+    )
+    compare_parser.add_argument(
+        "--baseline", metavar="PATH",
+        help="Path to the baseline JSON report (e.g. committed from main)",
+    )
+    compare_parser.add_argument(
+        "--output-md", metavar="PATH",
+        help="Write a PR-comment-ready markdown diff to this path",
+    )
+    compare_parser.add_argument(
+        "--score-drop-threshold", type=float, default=0.1, metavar="FLOAT",
+        help="Flag passing tests whose score dropped more than this (default: 0.1)",
+    )
+    compare_parser.add_argument(
+        "--fail-on-regression", action="store_true",
+        help="Exit with code 1 if any baseline-passing test now fails",
+    )
+    compare_parser.add_argument(
+        "--quiet", "-q", action="store_true", default=False,
+        help="Suppress terminal output (markdown is still written)",
+    )
+
     # rubric version
     subparsers.add_parser("version", help="Show Rubric version")
 
@@ -62,6 +92,10 @@ Docs: https://github.com/kareem-rashed/rubric-eval
     if args.command == "run":
         _run_file(args)
         return
+
+    if args.command == "compare":
+        from rubriceval.cli.compare import run_compare
+        sys.exit(run_compare(args))
 
     parser.print_help()
 
