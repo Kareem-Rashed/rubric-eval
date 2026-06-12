@@ -1,282 +1,190 @@
 <div align="center">
   <img src="docs/logo.svg" alt="Rubric" width="72" height="72"/>
   <h1>Rubric</h1>
-  <p><strong>The independent LLM &amp; AI agent evaluation framework.</strong></p>
-  <p><em>pytest for AI — neutral, extensible, not owned by any AI company.</em></p>
+  <p><strong>Agent behavior testing for LLM apps.</strong></p>
+  <p><em>Test what your agent <strong>did</strong> — tools called, arguments, trace, latency — not just what it said. Catch regressions in CI before they ship.</em></p>
 </div>
 
-[![PyPI version](https://badge.fury.io/py/rubric-eval.svg)](https://badge.fury.io/py/rubric-eval)
+[![PyPI version](https://badge.fury.io/py/rubric-eval.svg)](https://pypi.org/project/rubric-eval/)
+[![CI](https://github.com/Kareem-Rashed/rubric-eval/actions/workflows/ci.yml/badge.svg)](https://github.com/Kareem-Rashed/rubric-eval/actions/workflows/ci.yml)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![GitHub Stars](https://img.shields.io/github/stars/kareem-rashed/rubric-eval?style=social)](https://github.com/kareem-rashed/rubric-eval)
-
-> **Not owned by any AI company. Open source forever.**
->
-> Now that Promptfoo has joined OpenAI, the community needs a neutral eval framework.
-> Rubric is built by developers, for developers — no conflict of interest.
 
 ---
 
-## Why Rubric?
+## The problem
 
-| | Rubric | DeepEval | Promptfoo |
-|---|---|---|---|
-| Open source | ✅ MIT | ✅ Apache | ✅ MIT (now OpenAI-owned) |
-| Agent trace evaluation | ✅ First-class | ❌ Limited | ❌ No |
-| Zero required dependencies | ✅ | ❌ Requires LLM API | ❌ Requires Node.js |
-| Works with any LLM | ✅ Any callable | ✅ | ✅ |
-| pytest integration | ✅ Native fixture | ✅ | ❌ YAML-based |
-| Local HTML dashboard | ✅ Built-in | 💰 Paid cloud | ❌ No |
-| Owned by AI company | ❌ Independent | ❌ Independent | ✅ OpenAI |
+Your agent passed every manual check. Then a prompt tweak shipped, and it quietly stopped calling `lookup_order` and started answering from memory. The responses still *look* fine — string-match evals and LLM judges that only see the final output can't catch it.
 
----
-
-## Install
+Rubric tests the **behavior**: which tools were called, with what arguments, in what order, whether forbidden tools were avoided, how clean the reasoning trace was, and how fast it ran. Zero required dependencies, fully local, MIT.
 
 ```bash
 pip install rubric-eval
-
-# Optional extras (install what you need):
-pip install "rubric-eval[semantic]"   # SemanticSimilarity metric
-pip install "rubric-eval[openai]"     # LLM judge via OpenAI
-pip install "rubric-eval[anthropic]"  # LLM judge via Anthropic
-pip install "rubric-eval[all]"        # Everything
 ```
 
 ---
 
-## Quick Start
+## Test a LangGraph agent in 60 seconds
+
+No callbacks, no wrappers, no manual wiring. Rubric extracts tool calls, arguments, outputs, errors, the full trace, latency, and token usage from the messages your agent already produces.
 
 ```python
 import rubriceval as rubric
+from langgraph.prebuilt import create_react_agent
 
-# Replace with your real LLM call — OpenAI, Anthropic, LangChain, any callable
-def call_llm(prompt: str) -> str: ...
+agent = create_react_agent(model, tools=[lookup_order, create_ticket, send_email])
 
-# Attach per-test metrics directly on the TestCase.
-# Shared metrics (e.g. safety checks) go on evaluate() and apply to all.
 report = rubric.evaluate(
-    test_cases=[
-        rubric.TestCase(
-            name="Pricing inquiry",
-            input="What are the pricing plans?",
-            actual_output=call_llm("What are the pricing plans?"),
-            metrics=[rubric.Contains(["$29", "$99", "trial"])],
-        ),
-        rubric.TestCase(
-            name="Cancellation flow",
-            input="How do I cancel my subscription?",
-            actual_output=call_llm("How do I cancel my subscription?"),
-            metrics=[rubric.Contains(["Settings", "Billing", "export"])],
-        ),
-        rubric.TestCase(
-            name="Data retention",
-            input="What happens to my data if I cancel?",
-            actual_output=call_llm("What happens to my data if I cancel?"),
-            metrics=[rubric.Contains(["30 days", "deleted"])],
-        ),
-    ],
-    # Shared metric — runs on every test case
-    metrics=[rubric.NotContains(["I don't know", "I'm not sure"])],
-    output_html="report.html",
-)
-```
-
-**Output:**
-```
-🔍 Rubric — Running 3 test case(s) with 1 metric(s)...
-
-  [1/3] Pricing inquiry
-    ✅ Score: 1.000
-        ✓ not_contains: 1.000 — No forbidden strings found.
-        ✓ contains: 1.000 — Found all required substrings.
-
-  [2/3] Cancellation flow
-    ✅ Score: 1.000
-        ✓ not_contains: 1.000 — No forbidden strings found.
-        ✓ contains: 1.000 — Found all required substrings.
-
-  [3/3] Data retention
-    ✅ Score: 1.000
-        ✓ not_contains: 1.000 — No forbidden strings found.
-        ✓ contains: 1.000 — Found all required substrings.
-
-============================================================
-  RUBRIC EVALUATION REPORT
-============================================================
-  Total:     3
-  ✅ Passed:  3
-  ❌ Failed:  0
-  Pass Rate: 100.0%
-  Avg Score: 1.000
-============================================================
-```
-
----
-
-## Agent Evaluation (Rubric's Superpower)
-
-Unlike other frameworks that only check final output, Rubric evaluates the **entire agent execution** — tool calls, reasoning trace, latency, and task completion.
-
-```python
-import rubriceval as rubric
-
-# Run your agent on each scenario and pass what it actually did
-report = rubric.evaluate(
-    test_cases=[
-        rubric.AgentTestCase(
-            name="Order inquiry",
+    test_cases=rubric.run_langgraph(agent, scenarios=[
+        rubric.AgentScenario(
             input="Where is my order #ORD-9821?",
-            actual_output=agent.run("Where is my order #ORD-9821?"),
-            expected_tools=["lookup_order", "create_ticket"],
-            tool_calls=agent.tool_calls,  # what it actually called
-            trace=agent.trace,            # full reasoning trace
-            latency_ms=agent.latency_ms,
+            expected_tools=["lookup_order"],
         ),
-        rubric.AgentTestCase(
-            name="Urgent — account locked",
+        rubric.AgentScenario(
             input="My account is locked, this is urgent.",
-            actual_output=agent.run("My account is locked, this is urgent."),
             expected_tools=["create_ticket"],
-            forbidden_tools=["send_email"],  # must NOT bypass the ticketing system
-            tool_calls=agent.tool_calls,
-            trace=agent.trace,
-            latency_ms=agent.latency_ms,
+            forbidden_tools=["send_email"],   # must not bypass the ticketing system
         ),
-    ],
+    ]),
     metrics=[
-        rubric.ToolCallAccuracy(check_order=False),  # right tools called?
-        rubric.TraceQuality(penalize_loops=True),    # clean reasoning?
-        rubric.TaskCompletion(),                      # task actually finished?
-        rubric.LatencyMetric(max_ms=3000),            # within latency budget?
+        rubric.ToolCallAccuracy(),            # right tools? no forbidden ones?
+        rubric.TraceQuality(),                # no loops, within step budget?
+        rubric.LatencyMetric(max_ms=3000),
     ],
     output_html="report.html",
+    output_json="report.json",
 )
 ```
 
----
+```
+  [2/2] My account is locked, this is urgent.
+    ❌ Score: 0.667
+        ✗ tool_call_accuracy: 0.000 — Missing expected tools: ['create_ticket']; Called forbidden tools: ['send_email']
+        ✓ trace_quality: 1.000 — Trace looks clean. 3 steps taken.
+        ✓ latency: 1.000 — Latency 1840ms is within budget (3000ms).
+```
 
-## pytest Integration
-
-Rubric integrates natively with pytest — write your evals as regular tests.
+Already have a result from `agent.invoke()`? One call:
 
 ```python
-# test_my_llm.py
-def test_factual_accuracy(rubric_eval):
-    rubric_eval.add(
-        rubric.TestCase(
-            input="What is the capital of Egypt?",
-            actual_output=my_llm("What is the capital of Egypt?"),
-            expected_output="Cairo",
-        ),
-        metrics=[rubric.Contains("Cairo"), rubric.SemanticSimilarity(threshold=0.8)],
-    )
-    # Auto-asserts at end of test — no extra code needed
-
-def test_agent_books_flight(rubric_eval):
-    result = agent.run("Book a flight to Paris")
-    rubric_eval.add(
-        rubric.AgentTestCase(
-            input="Book a flight to Paris",
-            actual_output=result.output,
-            expected_tools=["search_flights", "book_flight"],
-            tool_calls=result.tool_calls,
-        ),
-        metrics=[rubric.ToolCallAccuracy(), rubric.TaskCompletion()],
-    )
+case = rubric.from_langgraph(result, expected_tools=["lookup_order"])
 ```
+
+Not on LangGraph? `rubric.from_messages()` accepts any OpenAI-format message list (`role` / `content` / `tool_calls`), so it works with raw OpenAI tool-calling loops too. LangFuse and LangSmith trace exports load via `load_langfuse()` / `load_langsmith()`, and you can always construct an `AgentTestCase` by hand.
+
+---
+
+## Catch regressions in CI
+
+Rubric ships a GitHub Action that runs your evals on every PR, diffs against a baseline, and posts the result as a comment — like Codecov, but for agent behavior.
+
+```yaml
+# .github/workflows/eval.yml
+name: Agent Evals
+on: [pull_request]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Kareem-Rashed/rubric-eval@v0.2.0
+        with:
+          eval-file: evals/regression.py
+          baseline: evals/baseline.json
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+```
+
+The PR comment looks like this:
+
+> ## 🧪 Rubric eval — 🔻 1 regression
+>
+> | | Baseline | Current | Δ |
+> |---|---|---|---|
+> | Pass rate | 100.0% (12/12) | 91.7% (11/12) | 🔻 -0.08 |
+> | Avg score | 0.96 | 0.89 | 🔻 -0.07 |
+>
+> ### 🔻 Regressions (1)
+> - **Urgent — account locked** — pass → **fail** (score 1.00 → 0.67)
+>   - `tool_call_accuracy`: 1.00 → 0.00 — Missing expected tools: ['create_ticket']; Called forbidden tools: ['send_email']
+
+The same diff is available locally and in any CI system:
 
 ```bash
-pytest tests/ -v
+rubric run evals/regression.py --output-json current.json
+rubric compare current.json --baseline evals/baseline.json --fail-on-regression
 ```
+
+`rubric compare` flags pass→fail regressions, score drops on still-passing tests, fixed tests, and new/removed tests — with the failing metric's reason inline.
 
 ---
 
-## LLM-as-Judge
+## Metrics
 
-Use any LLM to evaluate response quality with custom criteria.
-Works with OpenAI, Anthropic, Ollama, or any callable.
+### Agent behavior (the core)
+| Metric | Checks |
+|--------|--------|
+| `ToolCallAccuracy()` | Expected tools called, forbidden tools avoided, optional order check |
+| `TraceQuality()` | No loops, within step budget |
+| `TaskCompletion()` | The task was actually finished |
+| `ToolCallEfficiency()` | No redundant or wasted tool calls |
+| `SafetyCompliance()` | No unsafe actions in the trace |
+| `ReasoningQuality()` | Coherent multi-step reasoning |
+| `ContextUtilization()` | Provided context was actually used |
+| `LatencyMetric(max_ms=...)` | Within latency budget |
+| `CostMetric(max_cost_usd=...)` | Within cost budget |
 
-```python
-from openai import OpenAI
-client = OpenAI()
-
-def my_judge(prompt: str) -> str:
-    return client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}],
-    ).choices[0].message.content
-
-report = rubric.evaluate(
-    test_cases=test_cases,
-    metrics=[
-        rubric.LLMJudge(
-            criteria="Is the response accurate, concise, and helpful?",
-            judge_fn=my_judge,
-            threshold=0.7,
-        ),
-        rubric.GEval(
-            name="coherence",
-            criteria="The response is logically consistent and well-structured.",
-            judge_fn=my_judge,
-        ),
-    ],
-)
-```
-
----
-
-## Available Metrics
-
-### String Matching (no dependencies)
-| Metric | Description |
-|--------|-------------|
-| `ExactMatch()` | Exact string comparison (case-insensitive by default) |
-| `Contains(substring)` | Output contains required string(s) |
-| `NotContains(forbidden)` | Output does NOT contain forbidden strings |
-| `RegexMatch(pattern)` | Output matches a regex pattern |
-
-### Semantic (requires `pip install rubric-eval[semantic]`)
-| Metric | Description |
-|--------|-------------|
-| `SemanticSimilarity(threshold=0.8)` | Cosine similarity via sentence-transformers |
-
-### ROUGE (requires `pip install rubric-eval[rouge]`)
-| Metric | Description |
-|--------|-------------|
-| `RougeScore(rouge_type="rougeL")` | ROUGE overlap score for summarization |
-
-### LLM Judge (requires an LLM API key)
-| Metric | Description |
-|--------|-------------|
-| `LLMJudge(criteria=...)` | Custom LLM-based scoring |
+### Output quality
+| Metric | Checks |
+|--------|--------|
+| `LLMJudge(criteria=...)` | Custom LLM-based scoring — works with any callable (OpenAI, Anthropic, Ollama) |
 | `GEval(name=..., criteria=...)` | Chain-of-thought LLM evaluation |
+| `HallucinationScore()` | Output grounded in the provided context (LLM judge or NLI mode) |
+| `SemanticSimilarity(threshold=...)` | Embedding similarity vs expected output (`[semantic]` extra) |
+| `RougeScore()` | ROUGE overlap for summarization (`[rouge]` extra) |
+| `ExactMatch()` / `Contains()` / `NotContains()` / `RegexMatch()` | String checks, zero dependencies |
 
-### Agent & Performance
-| Metric | Description |
-|--------|-------------|
-| `ToolCallAccuracy()` | Were the right tools called? Were forbidden tools avoided? |
-| `TraceQuality()` | Did the agent avoid loops and stay within step budget? |
-| `TaskCompletion()` | Did the agent complete the task? |
-| `LatencyMetric(max_ms=5000)` | Was the response within latency budget? |
-| `CostMetric(max_cost_usd=0.01)` | Was the API cost within budget? |
+LLM-judge metrics support repeated runs with **flakiness detection** — Rubric reports the score variance so you know when your judge, not your agent, is the unstable part.
 
-### Custom Metrics
+### Custom metrics
+
 ```python
 from rubriceval import BaseMetric, MetricResult
 
-class MyCustomMetric(BaseMetric):
-    name = "my_metric"
-    threshold = 0.5
+class NoApologySpam(BaseMetric):
+    name = "no_apology_spam"
+    threshold = 1.0
 
     def measure(self, test_case) -> MetricResult:
-        score = 1.0 if "good" in test_case.actual_output else 0.0
+        count = test_case.actual_output.lower().count("sorry")
         return MetricResult(
             metric_name=self.name,
-            score=score,
-            passed=score >= self.threshold,
-            reason="Output contains 'good'." if score else "Output lacks 'good'.",
+            score=1.0 if count <= 1 else 0.0,
+            passed=count <= 1,
+            reason=f"'sorry' appears {count} time(s).",
         )
+```
+
+---
+
+## pytest integration
+
+Evals as regular tests, via the built-in `rubric_eval` fixture:
+
+```python
+def test_agent_routes_urgent_requests(rubric_eval):
+    result = agent.invoke({"messages": [{"role": "user", "content": "Account locked, urgent!"}]})
+    rubric_eval.add(
+        rubric.from_langgraph(result,
+                              expected_tools=["create_ticket"],
+                              forbidden_tools=["send_email"]),
+        metrics=[rubric.ToolCallAccuracy()],
+    )
+    # auto-asserts at end of test
 ```
 
 ---
@@ -284,77 +192,44 @@ class MyCustomMetric(BaseMetric):
 ## CLI
 
 ```bash
-# Run an eval file
-rubric run my_evals.py
-
-# With HTML and JSON reports
-rubric run my_evals.py --output-html report.html --output-json report.json
-
-# Suppress per-test output, show only final summary
-rubric run my_evals.py --quiet
-
-# Fail CI if any test fails
-rubric run my_evals.py --fail-on-error
-
-# Check version
+rubric run evals/regression.py                      # run an eval file
+rubric run evals/regression.py --output-html report.html --output-json report.json
+rubric run evals/regression.py --quiet --fail-on-error
+rubric compare current.json --baseline baseline.json --fail-on-regression
 rubric version
 ```
 
+The HTML report is a single self-contained file with per-test traces, tool calls, and per-metric breakdowns — open it locally, attach it to CI artifacts, no server needed.
+
 ---
 
-## CI/CD Integration
+## Why Rubric
 
-```yaml
-# .github/workflows/eval.yml
-name: LLM Evaluation
-on: [push, pull_request]
+- **Behavior-first.** Most eval frameworks score the final answer. Rubric's core abstraction is the agent run — tools, arguments, trace, latency — because that's where agent bugs actually live.
+- **Zero wiring.** `run_langgraph()` / `from_messages()` turn the messages you already have into test cases. No SDK to thread through your app.
+- **CI-native.** Baseline diffing, PR comments, and exit codes are built in, not a paid add-on.
+- **Zero required dependencies, fully local.** `pip install rubric-eval` pulls in nothing else. Your prompts and traces never leave your machine.
+- **Independent and MIT-licensed.** Not owned by an AI company or a platform vendor — no pressure to route your evals through anyone's cloud.
 
-jobs:
-  eval:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - run: pip install rubric-eval
-      - run: rubric run evals/regression.py --output-json report.json
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      - uses: actions/upload-artifact@v4
-        with:
-          name: rubric-report
-          path: report.json
-```
+---
 
-Or use `raise_on_failure=True`:
-```python
-rubric.evaluate(
-    test_cases=test_cases,
-    metrics=[...],
-    raise_on_failure=True,  # calls sys.exit(1) if any test fails
-)
-```
+## Examples
+
+- [`examples/langgraph_eval.py`](examples/langgraph_eval.py) — agent behavior testing end-to-end (runs with zero deps, no API keys)
+- [`examples/eval.py`](examples/eval.py) — a production-realistic suite: FAQ bot + support agent
 
 ---
 
 ## Roadmap
 
-- [ ] 🌐 Web dashboard (local server with history)
-- [ ] 📊 Dataset management (load from CSV/JSONL)
-- [ ] 🔄 Regression detection (alert when pass rate drops)
-- [ ] 🔗 LangChain / LlamaIndex / CrewAI integrations
-- [ ] 📱 Slack/Discord notifications on eval failure
-- [ ] 🔴 Real-time production monitoring
-
----
+See [ROADMAP.md](ROADMAP.md). Next up: auto-capture for CrewAI, the OpenAI Agents SDK, and MCP servers; baseline auto-update on merge; dataset loaders.
 
 ## Contributing
 
-Rubric is built in the open. Contributions welcome!
+Contributions are welcome — the [issues](https://github.com/Kareem-Rashed/rubric-eval/issues) tagged `good first issue` are genuinely scoped to a first PR.
 
 ```bash
-git clone https://github.com/kareemrashed/rubric-eval
+git clone https://github.com/Kareem-Rashed/rubric-eval
 cd rubric-eval
 pip install -e ".[dev]"
 pytest tests/
@@ -362,10 +237,6 @@ pytest tests/
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
----
-
 ## License
 
-MIT © [Kareem Rashed](https://github.com/kareem-rashed)
-
----
+MIT © [Kareem Rashed](https://github.com/Kareem-Rashed)

@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "rubric-eval"
-version = "0.1.1"
-description = "The independent LLM & AI agent evaluation framework. pytest for AI."
+version = "0.2.0"
+description = "Agent behavior testing for LLM apps. Auto-capture agent runs, eval tool calls and traces, catch regressions in CI."
 readme = "README.md"
 license = { text = "MIT" }
 authors = [
@@ -13,7 +13,8 @@ authors = [
 ]
 keywords = [
   "llm", "evaluation", "testing", "ai", "agents", "evals",
-  "openai", "anthropic", "langchain", "rag", "benchmarking",
+  "openai", "anthropic", "langchain", "langgraph", "rag", "benchmarking",
+  "regression-testing", "ci",
 ]
 classifiers = [
   "Development Status :: 3 - Alpha",

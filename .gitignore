@@ -308,6 +308,7 @@ Thumbs.db
 local_config.py
 dev_config.json
 local/
+marketing/
 
 # ============================================================================
 # END .gitignore
