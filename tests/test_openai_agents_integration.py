@@ -105,6 +105,42 @@ def test_from_agents_sdk_captures_hosted_tool_payload_and_inline_results():
     assert case.trace[0].metadata == {"tool_calls": ["file_search"]}
 
 
+def test_from_agents_sdk_captures_tool_search_items():
+    result = Obj(
+        input="Find the account lookup tool",
+        new_items=[
+            Obj(
+                type="tool_search_call_item",
+                raw_item=Obj(
+                    type="tool_search_call",
+                    call_id="call_search_1",
+                    arguments={"query": "account balance"},
+                    execution="server",
+                    status="completed",
+                ),
+            ),
+            Obj(
+                type="tool_search_output_item",
+                raw_item=Obj(
+                    type="tool_search_output",
+                    call_id="call_search_1",
+                    tools=[{"name": "lookup_balance"}],
+                    execution="server",
+                    status="completed",
+                ),
+            ),
+        ],
+        final_output="Found it.",
+    )
+
+    case = from_agents_sdk(result)
+
+    assert case.tool_names_called == ["tool_search"]
+    assert case.tool_calls[0].arguments == {"query": "account balance"}
+    assert case.tool_calls[0].output == [{"name": "lookup_balance"}]
+    assert [step.type for step in case.trace] == ["llm_call", "tool_call"]
+
+
 def test_from_agents_sdk_requires_new_items_shape():
     try:
         from_agents_sdk(Obj(final_output="done"))

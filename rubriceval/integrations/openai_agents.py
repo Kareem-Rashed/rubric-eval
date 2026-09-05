@@ -112,7 +112,7 @@ def _tool_arguments(raw: Any) -> dict[str, Any]:
 
 
 def _inline_tool_output(raw: Any) -> Any:
-    for name in ("output", "outputs", "result", "results"):
+    for name in ("output", "outputs", "result", "results", "tools"):
         value = _field(raw, name, _MISSING)
         if value is not _MISSING and value is not None:
             return value
@@ -157,7 +157,7 @@ def from_agents_sdk(result: Any, **kwargs: Any) -> AgentTestCase:
         item_type = _field(item, "type", "")
         raw = _field(item, "raw_item", item)
 
-        if item_type == "tool_call_item":
+        if item_type in {"tool_call_item", "tool_search_call_item"}:
             name = _tool_name(item, raw)
             call_id = _field(item, "call_id") or _field(raw, "call_id") or _field(raw, "id")
             call = ToolCall(
@@ -176,7 +176,7 @@ def from_agents_sdk(result: Any, **kwargs: Any) -> AgentTestCase:
                 )
             )
 
-        elif item_type == "tool_call_output_item":
+        elif item_type in {"tool_call_output_item", "tool_search_output_item"}:
             call_id = _field(item, "call_id") or _field(raw, "call_id") or _field(raw, "id")
             matched_call = by_id.get(str(call_id)) if call_id is not None else None
             if matched_call is None:
@@ -187,7 +187,7 @@ def from_agents_sdk(result: Any, **kwargs: Any) -> AgentTestCase:
             if matched_call is None:
                 matched_call = ToolCall(name="")
                 tool_calls.append(matched_call)
-            matched_call.output = _field(item, "output", _field(raw, "output"))
+            matched_call.output = _field(item, "output", _inline_tool_output(raw))
             trace.append(
                 TraceStep(
                     type="tool_call",
