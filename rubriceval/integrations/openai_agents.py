@@ -157,7 +157,7 @@ def from_agents_sdk(result: Any, **kwargs: Any) -> AgentTestCase:
         item_type = _field(item, "type", "")
         raw = _field(item, "raw_item", item)
 
-        if item_type in {"tool_call_item", "tool_search_call_item"}:
+        if item_type in {"tool_call_item", "tool_search_call_item", "handoff_call_item"}:
             name = _tool_name(item, raw)
             call_id = _field(item, "call_id") or _field(raw, "call_id") or _field(raw, "id")
             call = ToolCall(
@@ -176,7 +176,11 @@ def from_agents_sdk(result: Any, **kwargs: Any) -> AgentTestCase:
                 )
             )
 
-        elif item_type in {"tool_call_output_item", "tool_search_output_item"}:
+        elif item_type in {
+            "tool_call_output_item",
+            "tool_search_output_item",
+            "handoff_output_item",
+        }:
             call_id = _field(item, "call_id") or _field(raw, "call_id") or _field(raw, "id")
             matched_call = by_id.get(str(call_id)) if call_id is not None else None
             if matched_call is None:

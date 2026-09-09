@@ -141,6 +141,42 @@ def test_from_agents_sdk_captures_tool_search_items():
     assert [step.type for step in case.trace] == ["llm_call", "tool_call"]
 
 
+def test_from_agents_sdk_captures_handoff_boundaries():
+    result = Obj(
+        input="Route this billing request",
+        new_items=[
+            Obj(
+                type="handoff_call_item",
+                raw_item=Obj(
+                    type="function_call",
+                    name="transfer_to_billing",
+                    arguments='{"reason": "refund"}',
+                    call_id="handoff_1",
+                ),
+            ),
+            Obj(
+                type="handoff_output_item",
+                raw_item={
+                    "type": "function_call_output",
+                    "call_id": "handoff_1",
+                    "output": "Transferred to Billing Agent",
+                },
+                source_agent=Obj(name="Triage Agent"),
+                target_agent=Obj(name="Billing Agent"),
+            ),
+        ],
+        final_output="The billing agent will help.",
+    )
+
+    case = from_agents_sdk(result)
+
+    assert case.tool_names_called == ["transfer_to_billing"]
+    assert case.tool_calls[0].arguments == {"reason": "refund"}
+    assert case.tool_calls[0].output == "Transferred to Billing Agent"
+    assert [step.type for step in case.trace] == ["llm_call", "tool_call"]
+    assert case.trace[-1].metadata == {"tool": "transfer_to_billing"}
+
+
 def test_from_agents_sdk_requires_new_items_shape():
     try:
         from_agents_sdk(Obj(final_output="done"))
