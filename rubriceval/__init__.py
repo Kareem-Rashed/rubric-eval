@@ -79,6 +79,9 @@ from rubriceval.integrations.langgraph import (
     run_langgraph,
 )
 
+# OpenAI Agents SDK — auto-capture RunResult objects without importing the SDK
+from rubriceval.integrations.openai_agents import from_agents_sdk
+
 __all__ = [
     # Core
     "evaluate",
@@ -128,4 +131,6 @@ __all__ = [
     "from_langgraph",
     "from_messages",
     "run_langgraph",
+    # OpenAI Agents SDK auto-capture
+    "from_agents_sdk",
 ]

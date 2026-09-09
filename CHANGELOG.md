@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+- OpenAI Agents SDK `RunResult` auto-capture via `from_agents_sdk()`.
+
 ## [0.2.0] — 2026-06-12
 
 Repositioned around what Rubric does best: **agent behavior testing** —
